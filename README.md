@@ -24,3 +24,19 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - Java 21
 - Spring Boot 4
 - PostgreSQL
+
+## Especificações, ADRs e Outras Considerações
+
+### 25 Junho
+
+- Usar Gradle em vez de Maven: é uma ferramenta de build recente, rápida e flexível. Usar ficheiros groovy para a configuração. 
+- Criar tabelas do PostgreSQL: organizations, users, roles, time_entries, absents, log_events.
+- Usar UUID para chaves das tabelas: melhor segurança numa aplicação multi-tenant. Custo: mais espaço e índices mais lentos.
+- Usar os campos `created_at` e `updated_at` do tipo timestamp nas tabelas relevantes.
+- Usar soft-delete em vez de hard-delete, tendo o campo `deleted_at` a `NULL` para registos ativos. Custo: todas as queries JPA devem ficar com o filtro AndDeletedAtIsNull.
+- Usar Flyway para gerir o schema da base de dados. Configurar o Hibernate com `ddl-auto: validate`
+- Criar dados de demonstração para ambiente dev.
+- Ficheiros java organizados por camada. A alternativa seria organizar por funcionalidade, mas espera-se que o projeto não cresça demasiado em número de classes.
+- Enums guardados como texto: abordagem diferente do que fiz em projetos grandes que desenvolvi, mas aceitável para a dimensão deste projeto; previne os problemas de usar campos de estado numéricos quando alteramos a lista dos enums.
+- Usar `record` para os DTOs.
+- Usar Lombock para código boilerplate.
