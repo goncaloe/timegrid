@@ -23,6 +23,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 
 - Java 21
 - Spring Boot 4
+- Flyway
 - Gradle
 - PostgreSQL
 
