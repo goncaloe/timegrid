@@ -26,6 +26,24 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - Gradle
 - PostgreSQL
 
+## Como executar
+
+
+Pre-requisitos: Java21, Node LTS, Docker
+
+```sh
+# 1. Subir a base de dados no docker:
+docker compose up -d db mailpit
+
+# 2. Backend em ambiente dev
+./gradlew bootRun --args='--spring.profiles.active=dev'
+
+# 3. Frontend, noutro terminal
+cd frontend
+npm install
+npm run dev     # http://localhost:5173
+```
+
 ## Especificações, ADRs e Outras Considerações
 
 ### 25 Junho
