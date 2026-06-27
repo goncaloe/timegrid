@@ -1,6 +1,5 @@
 package com.timegrid.entity;
 
-
 import com.timegrid.enums.OrganizationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,28 +24,28 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Organization {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-	@Column(nullable = false, unique = true)
-	private String name;
+    @Column(nullable = false, unique = true)
+    private String name;
 
-	@Column(nullable = false)
-	private String timezone;
+    @Column(nullable = false)
+    private String timezone;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private OrganizationStatus status = OrganizationStatus.ACTIVE;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OrganizationStatus status = OrganizationStatus.ACTIVE;
 
-	@CreationTimestamp
-	@Column(nullable = false, updatable = false)
-	private Instant createdAt;
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
 
-	@UpdateTimestamp
-	@Column(nullable = false)
-	private Instant updatedAt;
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private Instant updatedAt;
 
-	private Instant deletedAt;
+    private Instant deletedAt;
 
 }

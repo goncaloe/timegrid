@@ -13,15 +13,15 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class OrganizationService {
 
-	private final OrganizationRepository organizationRepository;
+    private final OrganizationRepository organizationRepository;
 
-	public List<Organization> findAll() {
-		return organizationRepository.findAll();
-	}
+    public List<Organization> findAll() {
+        return organizationRepository.findAll();
+    }
 
-	public Organization findById(UUID id) {
-		return organizationRepository.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-	}
+    public Organization findById(UUID id) {
+        return organizationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    }
 
 }
