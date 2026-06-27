@@ -60,3 +60,12 @@ npm run dev     # http://localhost:5173
 - Enums guardados como texto: abordagem diferente do que fiz em projetos grandes que desenvolvi, mas aceitável para a dimensão deste projeto; previne os problemas de usar campos de estado numéricos quando alteramos a lista dos enums.
 - Usar `record` para os DTOs.
 - Usar Lombock para código boilerplate.
+
+### 27 Junho
+
+- Campo timezone nas empresas (tabela organizations).
+- Departamentos das empresas (tabela teams): Para separar quem aprova registos de outros colaboradores.
+- Users e Roles com 3 tipos de perfis: Administrador, Gestor e Colaborador.
+- Implementar permissões RBAC que definem o que cada perfil pode fazer
+- Utilizadores com role `EMPLOYEE` não têm permissões explicitas na tabela permissions, nem precisam: as ações que conseguem ver são as que não requerem permissões.
+- Estender de `BaseEntity` para entidades com id e datas automáticas
