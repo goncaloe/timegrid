@@ -32,6 +32,13 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public User create(CreateUserRequest request) {
+        if (userRepository.existsByUsername(request.username())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "username already exists");
+        }
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already exists");
+        }
+
         Organization organization = organizationRepository.findById(request.organizationId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
