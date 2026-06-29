@@ -11,6 +11,8 @@ import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
 import java.util.Optional;
 import java.util.Set;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -52,7 +54,15 @@ public class UserService {
         user.setRoles(Set.of(defaultRole));
 
         return userRepository.save(user);
+    }
 
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    public User findById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
 }
