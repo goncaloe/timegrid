@@ -16,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.server.ResponseStatusException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -65,4 +67,16 @@ class UserServiceTest {
         assertThat(created.getRoles()).containsExactly(employeeRole);
     }
 
+    @Test
+    void rejectsDuplicateEmail() {
+        CreateUserRequest request = new CreateUserRequest(
+                "tiago.figueiredo", "tiago.figueiredo@tejodigital.pt", "Tiago Figueiredo",
+                "gestor123", UUID.randomUUID(), null);
+
+        when(userRepository.existsByUsername(request.username())).thenReturn(false);
+        when(userRepository.existsByEmail(request.email())).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.create(request))
+                .isInstanceOf(ResponseStatusException.class);
+    }
 }
