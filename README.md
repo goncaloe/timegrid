@@ -69,3 +69,14 @@ npm run dev     # http://localhost:5173
 - Implementar permissões RBAC que definem o que cada perfil pode fazer
 - Utilizadores com role `EMPLOYEE` não têm permissões explicitas na tabela permissions, nem precisam: as ações que conseguem ver são as que não requerem permissões.
 - Estender de `BaseEntity` para entidades com id e datas automáticas
+
+### 29 Junho
+
+- Erro 404 (e não 403) para recursos de outra organização: desta forma não revela a existência de ids de outras organizações.
+- Usar `@Transactional` nos serviços para garantir operações atómicas: se algo falhar a meio, faz rollback e tudo o que foi feito é desfeito.
+- Usar `@Transactional(readOnly = true)` em operações de consulta, para melhor eficiência.
+- As entities dento de `@Transactional` não precisa de `save()`: fica gerido pelo Hibernate.
+- Usar a configuração `open-in-view: false` para fechar sessões JPA e evitar problemas de serialização JSON em entidades com relações LAZY.
+- Usar JPQL em algumas consultas mais complexas nos repository.
+- Usar SQL nativo para queries com funções do PostgreSQL ou condições ON nos LEFT JOIN.
+- Usar `@EntityGraph` para trazer relações LAZY na mesma consulta com join, e evitar o problema N+1.
