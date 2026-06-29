@@ -25,6 +25,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - Spring Boot 4
 - Flyway
 - Gradle
+- JUnit e Mockito
 - PostgreSQL
 
 ## Como executar
