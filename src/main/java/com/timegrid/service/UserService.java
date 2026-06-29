@@ -9,7 +9,6 @@ import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
-import java.util.Optional;
 import java.util.Set;
 import java.util.List;
 import java.util.UUID;
