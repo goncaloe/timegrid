@@ -3,6 +3,7 @@ package com.timegrid.controller;
 import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.dto.UserResponse;
 import com.timegrid.service.UserService;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@RequestBody CreateUserRequest request) {
+    public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return UserResponse.from(userService.create(request));
     }
 
