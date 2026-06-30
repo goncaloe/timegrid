@@ -6,12 +6,15 @@ import com.timegrid.entity.Organization;
 import com.timegrid.entity.Team;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.TeamRepository;
+import com.timegrid.exception.NotFoundException;
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,10 +23,12 @@ public class TeamService {
     private final TeamRepository teamRepository;
     private final OrganizationRepository organizationRepository;
 
+    @Transactional(readOnly = true)
     public List<Team> findByOrganization(UUID organizationId) {
-        return teamRepository.findByOrganizationId(organizationId);
+        return teamRepository.findByOrganizationIdAndDeletedAtIsNull(organizationId);
     }
 
+    @Transactional
     public Team create(CreateTeamRequest request) {
         Organization organization = organizationRepository.findById(request.organizationId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -37,12 +42,28 @@ public class TeamService {
     }
 
     public Team update(UUID id, UpdateTeamRequest request) {
-        Team team = teamRepository.findById(id)
+        Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
         team.setName(request.name());
         team.setDescription(request.description());
 
+        return teamRepository.save(team);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
+                .orElseThrow(() -> new NotFoundException("Team not found.", id));
+        team.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public Team restore(UUID id) {
+        Team team = teamRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Team not found.", id));
+
+        team.setDeletedAt(null);
         return teamRepository.save(team);
     }
 

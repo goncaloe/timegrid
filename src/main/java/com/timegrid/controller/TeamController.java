@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +43,17 @@ public class TeamController {
     @PutMapping("/{id}")
     public TeamResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateTeamRequest request) {
         return TeamResponse.from(teamService.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID id) {
+        teamService.delete(id);
+    }
+
+    @PostMapping("/{id}/restore")
+    public TeamResponse restore(@PathVariable UUID id) {
+        return TeamResponse.from(teamService.restore(id));
     }
 
 }
