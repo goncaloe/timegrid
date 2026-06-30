@@ -7,6 +7,7 @@ import com.timegrid.enums.OrganizationStatus;
 import com.timegrid.repository.OrganizationRepository;
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,19 @@ public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
 
+    @Transactional(readOnly = true)
     public List<Organization> findAll() {
-        return organizationRepository.findAll();
+        return organizationRepository.findByDeletedAtIsNull();
     }
 
+    @Transactional(readOnly = true)
+    public List<Organization> findDeleted() {
+        return organizationRepository.findByDeletedAtIsNotNull();
+    }
+
+    @Transactional(readOnly = true)
     public Organization findById(UUID id) {
-        return organizationRepository.findById(id)
+        return organizationRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -54,6 +62,26 @@ public class OrganizationService {
         organization.setTimezone(request.timezone());
         organization.setStatus(request.status());
 
+        return organizationRepository.save(organization);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        Organization organization = findById(id);
+        organization.setDeletedAt(Instant.now());
+        organizationRepository.save(organization);
+    }
+
+    @Transactional
+    public Organization restore(UUID id) {
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if (organization.getDeletedAt() == null) {
+            return organization;
+        }
+
+        organization.setDeletedAt(null);
         return organizationRepository.save(organization);
     }
 
