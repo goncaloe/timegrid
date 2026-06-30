@@ -4,6 +4,7 @@ import com.timegrid.dto.CreateTeamRequest;
 import com.timegrid.dto.UpdateTeamRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.entity.Team;
+import com.timegrid.exception.ConflictException;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.exception.NotFoundException;
@@ -31,6 +32,11 @@ public class TeamService {
         Organization organization = organizationRepository.findById(request.organizationId())
                 .orElseThrow(() -> new NotFoundException("Organization not found.", request.organizationId()));
 
+        if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNull(
+                organization.getId(), request.name())) {
+            throw new ConflictException("A team with this name already exists in this organization.");
+        }
+
         Team team = new Team();
         team.setName(request.name());
         team.setDescription(request.description());
@@ -43,6 +49,11 @@ public class TeamService {
     public Team update(UUID id, UpdateTeamRequest request) {
         Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new NotFoundException("Team not found.", id));
+
+        if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNullAndIdNot(
+                team.getOrganization().getId(), request.name(), id)) {
+            throw new ConflictException("A team with this name already exists in this organization.");
+        }
 
         team.setName(request.name());
         team.setDescription(request.description());
