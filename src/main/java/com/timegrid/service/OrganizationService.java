@@ -7,9 +7,12 @@ import com.timegrid.enums.OrganizationStatus;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
+import com.timegrid.exception.BusinessRuleException;
 import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.DateTimeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,8 @@ public class OrganizationService {
 
     @Transactional
     public Organization create(CreateOrganizationRequest request) {
+        validateTimezone(request.timezone());
+
         if (organizationRepository.existsByName(request.name())) {
             throw new ConflictException("There is already an organization with this name.");
         }
@@ -53,6 +58,8 @@ public class OrganizationService {
     @Transactional
     public Organization update(UUID id, UpdateOrganizationRequest request) {
         Organization organization = findById(id);
+
+        validateTimezone(request.timezone());
 
         if (organizationRepository.existsByNameAndIdNot(request.name(), id)) {
             throw new ConflictException("There is already an organization with this name.");
@@ -82,6 +89,14 @@ public class OrganizationService {
 
         organization.setDeletedAt(null);
         return organizationRepository.save(organization);
+    }
+
+    private void validateTimezone(String timezone) {
+        try {
+            ZoneId.of(timezone);
+        } catch (DateTimeException ex) {
+            throw new BusinessRuleException("Unknown timezone.", timezone);
+        }
     }
 
 }

@@ -4,6 +4,7 @@ import com.timegrid.dto.CreateOrganizationRequest;
 import com.timegrid.dto.UpdateOrganizationRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.enums.OrganizationStatus;
+import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.OrganizationRepository;
@@ -54,6 +55,15 @@ class OrganizationServiceTest {
         assertThat(created.getName()).isEqualTo("Tejo Digital");
         assertThat(created.getTimezone()).isEqualTo("Europe/Lisbon");
         assertThat(created.getStatus()).isEqualTo(OrganizationStatus.ACTIVE);
+    }
+
+    @Test
+    void createRejectsInvalidTimezone() {
+        CreateOrganizationRequest request = new CreateOrganizationRequest("Tejo Digital", "Mars/Olympus");
+
+        assertThatThrownBy(() -> organizationService.create(request))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(organizationRepository, never()).save(any());
     }
 
     @Test
