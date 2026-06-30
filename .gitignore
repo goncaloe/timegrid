@@ -12,6 +12,10 @@ build/
 .idea/
 *.iml
 .vscode/
+.classpath
+.factorypath
+.project
+.settings/
 
 # OS
 .DS_Store
