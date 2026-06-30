@@ -5,14 +5,14 @@ import com.timegrid.dto.UpdateOrganizationRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.enums.OrganizationStatus;
 import com.timegrid.repository.OrganizationRepository;
+import com.timegrid.exception.ConflictException;
+import com.timegrid.exception.NotFoundException;
 import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -33,13 +33,13 @@ public class OrganizationService {
     @Transactional(readOnly = true)
     public Organization findById(UUID id) {
         return organizationRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Organization not found.", id));
     }
 
     @Transactional
     public Organization create(CreateOrganizationRequest request) {
         if (organizationRepository.existsByName(request.name())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "o nome já existe");
+            throw new ConflictException("There is already an organization with this name.");
         }
 
         Organization organization = new Organization();
@@ -55,7 +55,7 @@ public class OrganizationService {
         Organization organization = findById(id);
 
         if (organizationRepository.existsByNameAndIdNot(request.name(), id)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "o nome já existe");
+            throw new ConflictException("There is already an organization with this name.");
         }
 
         organization.setName(request.name());
@@ -69,13 +69,12 @@ public class OrganizationService {
     public void delete(UUID id) {
         Organization organization = findById(id);
         organization.setDeletedAt(Instant.now());
-        organizationRepository.save(organization);
     }
 
     @Transactional
     public Organization restore(UUID id) {
         Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Organization not found.", id));
 
         if (organization.getDeletedAt() == null) {
             return organization;

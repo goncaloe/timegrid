@@ -8,6 +8,7 @@ import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
+import com.timegrid.exception.ConflictException;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +17,6 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,6 +77,6 @@ class UserServiceTest {
         when(userRepository.existsByEmail(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(ResponseStatusException.class);
+                .isInstanceOf(ConflictException.class);
     }
 }

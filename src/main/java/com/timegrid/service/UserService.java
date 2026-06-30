@@ -9,15 +9,15 @@ import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
+import com.timegrid.exception.ConflictException;
+import com.timegrid.exception.NotFoundException;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -35,23 +35,23 @@ public class UserService {
     @Transactional
     public User create(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "username already exists");
+            throw new ConflictException("This username is already in use.");
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "email already exists");
+            throw new ConflictException("This email is already in use.");
         }
 
         Organization organization = organizationRepository.findById(request.organizationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Organization not found.", request.organizationId()));
 
         Team team = null;
         if (request.teamId() != null) {
             team = teamRepository.findById(request.teamId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                    .orElseThrow(() -> new NotFoundException("Team not found.", request.teamId()));
         }
 
         Role defaultRole = roleRepository.findByName(DEFAULT_ROLE)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR));
+                .orElseThrow(() -> new IllegalStateException("The role EMPLOYEE does not exists in database."));
 
         User user = new User();
         user.setUsername(request.username());
@@ -73,7 +73,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("User not found.", id));
     }
 
 }

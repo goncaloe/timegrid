@@ -11,9 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -31,7 +29,7 @@ public class TeamService {
     @Transactional
     public Team create(CreateTeamRequest request) {
         Organization organization = organizationRepository.findById(request.organizationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Organization not found.", request.organizationId()));
 
         Team team = new Team();
         team.setName(request.name());
@@ -41,9 +39,10 @@ public class TeamService {
         return teamRepository.save(team);
     }
 
+    @Transactional
     public Team update(UUID id, UpdateTeamRequest request) {
         Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new NotFoundException("Team not found.", id));
 
         team.setName(request.name());
         team.setDescription(request.description());
