@@ -17,12 +17,14 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - **Ausências**: férias, doença, formação e assuntos pessoais, com contagem de dias úteis e cancelamento.
 - **Banco de horas**: calcular a partir do saldo de cada dia, descontando fins de semana, feriados e ausências aprovadas.
 - **Feriados**: os nacionais portugueses são calculados automaticamente (incluindo dias móveis como a Páscoa); cada empresa pode acrescentar os seus.
+- **Segurança**: Spring Security com JWT. CORS.
 - **Perfis (Admin, Gestor, Colaborador)**, com permissões RBAC.
 
 ## Tecnologias
 
 - Java 21
 - Spring Boot 4
+- Spring Security 6 com JWT
 - Flyway
 - Gradle
 - JUnit e Mockito
