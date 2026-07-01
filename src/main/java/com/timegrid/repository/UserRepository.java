@@ -11,7 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     @EntityGraph(attributePaths = "roles")
-	Page<User> findAll(Pageable pageable);
+    Page<User> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = "roles")
     Optional<User> findById(UUID id);
@@ -19,5 +19,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
+
+    @EntityGraph(attributePaths = "roles")
+    Optional<User> findByUsernameOrEmailIgnoreCase(String username, String email);
 
 }
