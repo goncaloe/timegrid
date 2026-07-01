@@ -22,6 +22,7 @@ public class AppUserDetails implements UserDetails {
     private final String username;
     private final String password;
     private final UUID organizationId;
+    private final String organizationName;
     private final String fullName;
     private final UserStatus status;
     private final boolean softDeleted;
@@ -33,6 +34,7 @@ public class AppUserDetails implements UserDetails {
         this.username = user.getUsername();
         this.password = user.getPasswordHash();
         this.organizationId = user.getOrganization().getId();
+        this.organizationName = user.getOrganization().getName();
         this.fullName = user.getFullName();
         this.status = user.getStatus();
         this.softDeleted = user.getDeletedAt() != null;
@@ -45,6 +47,10 @@ public class AppUserDetails implements UserDetails {
                 .map(Permission::getName)
                 .collect(Collectors.toSet());
         this.permissions = List.copyOf(perms);
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
     }
 
     public List<String> getRoleNames() {

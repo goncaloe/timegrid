@@ -33,32 +33,36 @@ public class JwtService {
         this.refreshTtl = properties.refreshTtl();
     }
 
-    public String generateAccessToken(UUID userId, UUID organizationId,
+    public AccessToken generateAccessToken(UUID userId, UUID organizationId,
             Collection<? extends GrantedAuthority> authorities) {
         Instant now = Instant.now();
+        Instant expires = now.plus(accessTtl);
         List<String> perms = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .issuer(ISSUER)
                 .subject(userId.toString())
                 .claim(CLAIM_ORG, organizationId.toString())
                 .claim(CLAIM_PERMS, perms)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(accessTtl)))
+                .expiration(Date.from(expires))
                 .signWith(secretKey)
                 .compact();
+        return new AccessToken(token, expires);
     }
 
-    public String generateRefreshToken(UUID userId) {
+    public RefreshToken generateRefreshToken(UUID userId) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        Instant expires = now.plus(refreshTtl);
+        String token = Jwts.builder()
                 .issuer(ISSUER)
                 .subject(userId.toString())
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(refreshTtl)))
+                .expiration(Date.from(expires))
                 .signWith(secretKey)
                 .compact();
+        return new RefreshToken(token, expires);
     }
 
     public Optional<Claims> parse(String token) {
@@ -79,6 +83,16 @@ public class JwtService {
 
     public UUID subject(Claims claims) {
         return UUID.fromString(claims.getSubject());
+    }
+
+    public Instant expiration(Claims claims) {
+        return claims.getExpiration().toInstant();
+    }
+
+    public record AccessToken(String value, Instant expiresAt) {
+    }
+
+    public record RefreshToken(String value, Instant expiresAt) {
     }
 
     public UUID organizationId(Claims claims) {
