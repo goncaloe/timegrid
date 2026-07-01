@@ -83,3 +83,14 @@ npm run dev     # http://localhost:5173
 - Usar JPQL em algumas consultas mais complexas nos repository.
 - Usar SQL nativo para queries com funções do PostgreSQL ou condições ON nos LEFT JOIN.
 - Usar `@EntityGraph` para trazer relações LAZY na mesma consulta com join, e evitar o problema N+1.
+
+### 01 Julho
+
+- Implementar JWT (JSON Web Token) com 2 tokens: acesso e refresh. Detalhes de implementação JWT: https://www.bezkoder.com/spring-boot-refresh-token-jwt/ e https://medium.com/@vishipatil/refresh-tokens-jwt-expiry-the-complete-guide-with-spring-boot-and-react-749674551005
+- Access token é de vida curta: 15 minutos.
+- Refresh token tem vida mais longa. Serve para pedir um access token novo. É guardado na bd e pode ser revogado.
+- Como o servidor é stateless (não guarda sessão) não é possível desligar um token JWT de acesso. Se o token de acesso fosse válido por vários dias, se fosse roubado dava acesso durante todo esse tempo. Por esse motivo existe o refresh token para mitigar estragos como esse.
+- Refresh token tem rotação: cada refresh só usa uma vez, gera um novo, e revoga o anterior.
+- Logout revoga o refresh token, mas o access token continua válido (no máximo 15 minutos). Este é o preço de um servidor stateless e do funcionamento do JWT.
+- CSRF desligado: Como estamos a usar JWT em que os tokens vem nos header dos pedidos, o browser não precisa enviar cookies, logo não se aplica este tipo de ataques.
+- Tratar exceções por falta de autenticação (401) e por falta de permissão (403) nos filtros do spring security e não no `@RestControllerAdvice`. Para os dois casos escrevem no `ProblemDetail` à mão para uniformizar o formato dos erros. Referência: https://devlach.com/blog/java/spring-security-custom-authentication-failure
