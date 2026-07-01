@@ -12,3 +12,8 @@ spring:
 logging:
   level:
     org.hibernate.SQL: debug
+
+timegrid:
+  security:
+    jwt:
+      secret: bXktdGltZWdyaWQtZGV2LXNlY3JldC1rZXktZm9yLWpzb24td2ViLXRva2Vucy10aW1lZ3JpZA==

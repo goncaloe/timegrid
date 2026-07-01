@@ -6,5 +6,12 @@ spring:
     hibernate:
       ddl-auto: validate
 
+timegrid:
+  security:
+    jwt:
+      secret: ${TIMEGRID_JWT_SECRET:}
+      access-ttl: 15m
+      refresh-ttl: 14d
+
 server:
   port: 8080
