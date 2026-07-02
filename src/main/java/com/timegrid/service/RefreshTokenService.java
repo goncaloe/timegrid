@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -58,7 +59,7 @@ public class RefreshTokenService {
         token.setRevokedAt(now);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllForUser(UUID userId, Instant now) {
         refreshTokenRepository.revokeAllActiveForUser(userId, now);
     }

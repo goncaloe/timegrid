@@ -2,6 +2,7 @@ package com.timegrid.service;
 
 import com.timegrid.dto.AuthResponse;
 import com.timegrid.dto.LoginRequest;
+import com.timegrid.dto.LogoutRequest;
 import com.timegrid.dto.RefreshRequest;
 import com.timegrid.dto.RefreshResponse;
 import com.timegrid.entity.RefreshToken;
@@ -62,6 +63,12 @@ public class AuthService {
                 user.getId(), now.plus(jwtService.refreshTtl()));
         token.setReplacedBy(refreshed.entity().getId());
         return new RefreshResponse(accessToken.value(), refreshed.rawValue(), accessToken.expiresAt());
+    }
+
+    @Transactional
+    public void logout(LogoutRequest request) {
+        refreshTokenService.findByValue(request.refreshToken())
+                .ifPresent(token -> refreshTokenService.revoke(token, Instant.now()));
     }
 
     private AppUserDetails authenticate(String username, String password) {
