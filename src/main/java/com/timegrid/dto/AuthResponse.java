@@ -14,9 +14,11 @@ public record AuthResponse(
         List<String> roles,
         List<String> permissions,
         String accessToken,
+        String refreshToken,
         Instant expiresAt) {
 
-    public static AuthResponse from(AppUserDetails user, String accessToken, Instant expiresAt) {
+    public static AuthResponse from(AppUserDetails user, String accessToken, Instant expiresAt,
+            String refreshToken) {
         return new AuthResponse(
                 user.getId(),
                 user.getUsername(),
@@ -26,6 +28,7 @@ public record AuthResponse(
                 user.getRoleNames(),
                 user.getPermissionNames(),
                 accessToken,
+                refreshToken,
                 expiresAt);
     }
 

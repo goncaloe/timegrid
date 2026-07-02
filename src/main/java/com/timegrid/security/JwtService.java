@@ -33,6 +33,14 @@ public class JwtService {
         this.refreshTtl = properties.refreshTtl();
     }
 
+    public Duration accessTtl() {
+        return accessTtl;
+    }
+
+    public Duration refreshTtl() {
+        return refreshTtl;
+    }
+
     public AccessToken generateAccessToken(UUID userId, UUID organizationId,
             Collection<? extends GrantedAuthority> authorities) {
         Instant now = Instant.now();

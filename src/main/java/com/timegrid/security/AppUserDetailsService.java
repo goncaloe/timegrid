@@ -1,9 +1,9 @@
 package com.timegrid.security;
 
 import com.timegrid.entity.User;
-import com.timegrid.enums.UserStatus;
 import com.timegrid.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,6 +20,13 @@ public class AppUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsernameOrEmailIgnoreCase(username, username)
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
+        return new AppUserDetails(user);
+    }
+
+    @Transactional(readOnly = true)
+    public UserDetails loadUserById(UUID id) {
+        User user = userRepository.findForAuthById(id)
                 .orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
         return new AppUserDetails(user);
     }
