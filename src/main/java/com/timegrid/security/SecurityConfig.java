@@ -11,9 +11,16 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-	public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
-		this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-	}
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
+
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+            RestAuthenticationEntryPoint authenticationEntryPoint,
+            RestAccessDeniedHandler accessDeniedHandler) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -29,9 +36,12 @@ public class SecurityConfig {
                     "/v3/api-docs/**")
                 .permitAll()
                 .anyRequest().authenticated())
-                .sessionManagement(session -> session
-                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
