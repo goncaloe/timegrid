@@ -2,6 +2,8 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.AuthResponse;
 import com.timegrid.dto.LoginRequest;
+import com.timegrid.dto.RefreshRequest;
+import com.timegrid.dto.RefreshResponse;
 import com.timegrid.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/refresh")
+    public RefreshResponse refresh(@Valid @RequestBody RefreshRequest request) {
+        return authService.refresh(request);
     }
 
 }

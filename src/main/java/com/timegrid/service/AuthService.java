@@ -2,16 +2,22 @@ package com.timegrid.service;
 
 import com.timegrid.dto.AuthResponse;
 import com.timegrid.dto.LoginRequest;
+import com.timegrid.dto.RefreshRequest;
+import com.timegrid.dto.RefreshResponse;
+import com.timegrid.entity.RefreshToken;
 import com.timegrid.enums.UserStatus;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.UnauthorizedException;
 import com.timegrid.security.AppUserDetails;
 import com.timegrid.security.AppUserDetailsService;
 import com.timegrid.security.JwtService;
+import java.time.Instant;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,31 +26,78 @@ public class AuthService {
     private final AppUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
+    @Transactional
     public AuthResponse login(LoginRequest request) {
+        AppUserDetails user = authenticate(request.username(), request.password());
+        JwtService.AccessToken accessToken = jwtService.generateAccessToken(
+                user.getId(), user.getOrganizationId(), user.getAuthorities());
+        RefreshTokenService.IssuedToken refreshToken = refreshTokenService.create(
+                user.getId(), Instant.now().plus(jwtService.refreshTtl()));
+        return AuthResponse.from(user, accessToken.value(), accessToken.expiresAt(),
+                refreshToken.rawValue());
+    }
+
+    @Transactional
+    public RefreshResponse refresh(RefreshRequest request) {
+        RefreshToken token = refreshTokenService.findByValue(request.refreshToken())
+                .orElseThrow(() -> new UnauthorizedException("The refresh token is invalid or has expired."));
+
+        Instant now = Instant.now();
+        if (token.isRevoked()) {
+            refreshTokenService.revokeAllForUser(token.getUserId(), now);
+            throw new UnauthorizedException("This refresh token was already used. Please sign in again.");
+        }
+        if (token.isExpired(now)) {
+            refreshTokenService.revoke(token, now);
+            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+        }
+
+        AppUserDetails user = loadActive(token.getUserId());
+        refreshTokenService.revoke(token, now);
+        JwtService.AccessToken accessToken = jwtService.generateAccessToken(
+                user.getId(), user.getOrganizationId(), user.getAuthorities());
+        RefreshTokenService.IssuedToken refreshed = refreshTokenService.create(
+                user.getId(), now.plus(jwtService.refreshTtl()));
+        token.setReplacedBy(refreshed.entity().getId());
+        return new RefreshResponse(accessToken.value(), refreshed.rawValue(), accessToken.expiresAt());
+    }
+
+    private AppUserDetails authenticate(String username, String password) {
         AppUserDetails user;
         try {
-            user = (AppUserDetails) userDetailsService.loadUserByUsername(request.username());
+            user = (AppUserDetails) userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            throw new UnauthorizedException("user.credentials.invalid");
+            throw new UnauthorizedException("Invalid username or password.");
         }
 
         if (user.isSoftDeleted()) {
-            throw new UnauthorizedException("user.deleted");
+            throw new UnauthorizedException("This user account was deleted.");
         }
         if (user.getStatus() == UserStatus.LOCKED) {
-            throw new ForbiddenException("user.locked");
+            throw new ForbiddenException("This user account is locked.");
         }
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UnauthorizedException("user.inactive");
+            throw new UnauthorizedException("This user account is inactive.");
         }
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new UnauthorizedException("user.credentials.invalid");
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new UnauthorizedException("Invalid username or password.");
         }
+        return user;
+    }
 
-        JwtService.AccessToken accessToken = jwtService.generateAccessToken(
-                user.getId(), user.getOrganizationId(), user.getAuthorities());
-        return AuthResponse.from(user, accessToken.value(), accessToken.expiresAt());
+    private AppUserDetails loadActive(UUID userId) {
+        AppUserDetails user;
+        try {
+            user = (AppUserDetails) userDetailsService.loadUserById(userId);
+        } catch (UsernameNotFoundException e) {
+            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+        }
+        if (user.isSoftDeleted() || user.getStatus() != UserStatus.ACTIVE) {
+            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+        }
+        return user;
     }
 
 }
