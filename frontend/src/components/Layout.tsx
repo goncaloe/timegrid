@@ -1,19 +1,17 @@
-import type { ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import styles from './Layout.module.css';
 
-interface LayoutProps {
-  children: ReactNode;
-}
-
-function Layout({ children }: LayoutProps) {
+function Layout() {
   return (
     <div className={styles.shell}>
       <Sidebar />
       <div className={styles.main}>
         <Topbar />
-        <main className={styles.content}>{children}</main>
+        <main className={styles.content}>
+          <Outlet />
+        </main>
       </div>
     </div>
   );
