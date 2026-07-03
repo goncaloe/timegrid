@@ -29,6 +29,9 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - Gradle
 - JUnit e Mockito
 - PostgreSQL
+- React 19
+- TypeScript
+- Vite
 
 ## Como executar
 
