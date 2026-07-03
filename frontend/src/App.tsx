@@ -1,5 +1,11 @@
+import Layout from './components/Layout';
+
 function App() {
-  return <div>TimeGrid</div>;
+  return (
+    <Layout>
+      <div>TimeGrid</div>
+    </Layout>
+  );
 }
 
 export default App;
