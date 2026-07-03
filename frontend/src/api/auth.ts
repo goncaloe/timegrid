@@ -23,6 +23,12 @@ export interface AuthResponse extends AuthProfile {
 
 export type MeResponse = AuthProfile;
 
+export interface RefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+}
+
 export function login(request: LoginRequest) {
   return apiFetch<AuthResponse>('/auth/login', {
     method: 'POST',
@@ -33,4 +39,20 @@ export function login(request: LoginRequest) {
 
 export function me() {
   return apiFetch<MeResponse>('/auth/me');
+}
+
+export function refresh(refreshToken: string) {
+  return apiFetch<RefreshResponse>('/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+    auth: false,
+  });
+}
+
+export function logout(refreshToken: string) {
+  return apiFetch<void>('/auth/logout', {
+    method: 'POST',
+    body: JSON.stringify({ refreshToken }),
+    auth: false,
+  });
 }
