@@ -12,6 +12,8 @@ import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
+
+import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -79,4 +81,18 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found.", id));
     }
 
+    @Transactional
+    public void delete(UUID id) {
+        User user = findById(id);
+        user.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public User restore(UUID id) {
+        User user = userRepository.findByIdAndOrganizationId(id, currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("User not found.", id));
+
+        user.setDeletedAt(null);
+        return userRepository.save(user);
+    }
 }

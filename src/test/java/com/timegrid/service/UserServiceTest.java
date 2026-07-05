@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -122,6 +123,37 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.findById(id))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void deleteMarksDeletedAt() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        User user = new User();
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+
+        userService.delete(id);
+
+        assertThat(user.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    void restoreClearsDeletedAt() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        User user = new User();
+        user.setDeletedAt(Instant.now());
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationId(id, organizationId)).thenReturn(Optional.of(user));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User restored = userService.restore(id);
+
+        assertThat(restored.getDeletedAt()).isNull();
     }
 
 }

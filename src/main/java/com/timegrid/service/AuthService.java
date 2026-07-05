@@ -47,6 +47,8 @@ public class AuthService {
 
         Instant now = Instant.now();
         if (token.isRevoked()) {
+            // um token revogado só volta a aparecer aqui se alguém o copiou antes da rotação (ex.: roubado);
+            // não há como saber se foi o dono ou o atacante que chegou primeiro, por isso corta todos desse utilizador
             refreshTokenService.revokeAllForUser(token.getUserId(), now);
             throw new UnauthorizedException("This refresh token was already used. Please sign in again.");
         }
