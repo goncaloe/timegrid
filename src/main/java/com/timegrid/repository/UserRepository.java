@@ -11,10 +11,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     @EntityGraph(attributePaths = "roles")
-    Page<User> findAll(Pageable pageable);
+    Page<User> findByOrganizationIdAndDeletedAtIsNull(UUID organizationId, Pageable pageable);
 
     @EntityGraph(attributePaths = "roles")
-    Optional<User> findById(UUID id);
+    Optional<User> findByIdAndOrganizationIdAndDeletedAtIsNull(UUID id, UUID organizationId);
+
+    @EntityGraph(attributePaths = "roles")
+    Optional<User> findByIdAndOrganizationId(UUID id, UUID organizationId);
 
     @EntityGraph(attributePaths = { "roles", "roles.permissions" })
     Optional<User> findForAuthById(UUID id);

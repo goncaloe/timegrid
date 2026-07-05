@@ -5,12 +5,13 @@ import com.timegrid.entity.Organization;
 import com.timegrid.entity.Role;
 import com.timegrid.entity.Team;
 import com.timegrid.entity.User;
+import com.timegrid.exception.ConflictException;
+import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
-import com.timegrid.exception.ConflictException;
-import com.timegrid.exception.NotFoundException;
+import com.timegrid.security.CurrentUser;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class UserService {
     private final TeamRepository teamRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CurrentUser currentUser;
 
     @Transactional
     public User create(CreateUserRequest request) {
@@ -41,12 +43,13 @@ public class UserService {
             throw new ConflictException("This email is already in use.");
         }
 
-        Organization organization = organizationRepository.findById(request.organizationId())
-                .orElseThrow(() -> new NotFoundException("Organization not found.", request.organizationId()));
+        Organization organization = organizationRepository.findById(currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
 
         Team team = null;
         if (request.teamId() != null) {
-            team = teamRepository.findById(request.teamId())
+            team = teamRepository
+                    .findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
                     .orElseThrow(() -> new NotFoundException("Team not found.", request.teamId()));
         }
 
@@ -67,12 +70,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Page<User> findAll(Pageable pageable) {
-        return userRepository.findAll(pageable);
+        return userRepository.findByOrganizationIdAndDeletedAtIsNull(currentUser.organizationId(), pageable);
     }
 
     @Transactional(readOnly = true)
     public User findById(UUID id) {
-        return userRepository.findById(id)
+        return userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("User not found.", id));
     }
 
