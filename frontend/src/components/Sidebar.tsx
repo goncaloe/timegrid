@@ -1,6 +1,18 @@
+import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
-const NAV_ITEMS = ['Painel', 'Utilizadores'];
+interface NavItem {
+  label: string;
+  path: string;
+  permissions?: string[];
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Painel', path: '/' },
+  { label: 'Utilizadores', path: '/users' },
+  { label: 'Departamentos', path: '/teams' },
+  { label: 'Organização', path: '/organization' },
+];
 
 function Sidebar() {
   return (
@@ -8,9 +20,14 @@ function Sidebar() {
       <div className={styles.brand}>TimeGrid</div>
       <nav className={styles.nav}>
         {NAV_ITEMS.map((item) => (
-          <span key={item} className={styles.navItem}>
-            {item}
-          </span>
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.path === '/'}
+            className={({ isActive }) => (isActive ? `${styles.navItem} ${styles.navItemActive}` : styles.navItem)}
+          >
+            {item.label}
+          </NavLink>
         ))}
       </nav>
     </aside>

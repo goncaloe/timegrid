@@ -1,0 +1,7 @@
+function OrganizationPage() {
+  return (
+    <div>Organization page</div>
+  );
+}
+
+export default OrganizationPage;

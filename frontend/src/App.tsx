@@ -2,6 +2,9 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Spinner from './components/Spinner';
 import DashboardPage from './pages/DashboardPage';
+import UsersPage from './features/users/UsersPage';
+import TeamsPage from './features/teams/TeamsPage';
+import OrganizationPage from './features/organization/OrganizationPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { useAuth } from './auth/useAuth';
@@ -24,6 +27,9 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<Layout />}>
           <Route path="/" element={<DashboardPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/teams" element={<TeamsPage />} />
+            <Route path="/organization" element={<OrganizationPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
