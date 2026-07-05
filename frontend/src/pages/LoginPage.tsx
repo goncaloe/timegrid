@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate, type Location } from 'react-router-dom';
 import Button from '../components/Button';
 import Field from '../components/Field';
 import Spinner from '../components/Spinner';
@@ -7,22 +7,32 @@ import { ApiError } from '../api/client';
 import { useAuth } from '../auth/useAuth';
 import styles from './LoginPage.module.css';
 
+interface LocationState {
+  from?: Location;
+}
+
 function LoginPage() {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  if (user) {
+    const from = (location.state as LocationState | null)?.from?.pathname ?? '/';
+    return <Navigate to={from} replace />;
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    console.log('login', username);
     setError(null);
     setIsSubmitting(true);
     try {
       await login({ username, password });
-      navigate('/', { replace: true });
+      const from = (location.state as LocationState | null)?.from?.pathname ?? '/';
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err instanceof ApiError && err.problem.detail ? err.problem.detail : 'Não foi possível iniciar sessão.');
     } finally {
