@@ -43,9 +43,11 @@ public class DemoDataLoader implements ApplicationRunner {
         Organization norteSoftware = createOrganization("Norte Software", "Europe/Lisbon");
         Organization atlanticoLogistica = createOrganization("Atlântico Logística", "Atlantic/Azores");
 
-        Team backendTejo = createTeam(tejoDigital, "Backend");
-        Team frontendTejo = createTeam(tejoDigital, "Frontend");
-        Team produtoTejo = createTeam(tejoDigital, "Produto");
+        Team itTejo = createTeam(tejoDigital, "IT");
+        Team devOpsTejo = createTeam(tejoDigital, "DevOps");
+        Team productTejo = createTeam(tejoDigital, "Product");
+        Team marketingTejo = createTeam(tejoDigital, "Marketing");
+        Team financeTejo = createTeam(tejoDigital, "Finance");
 
         Team backendNorte = createTeam(norteSoftware, "Backend");
         Team frontendNorte = createTeam(norteSoftware, "Frontend");
@@ -57,13 +59,21 @@ public class DemoDataLoader implements ApplicationRunner {
         createUser("goncalo.esteves", "goncalo.esteves@tejodigital.pt", "Gonçalo Esteves",
                 ADMIN_PASSWORD, "ADMIN", tejoDigital, null);
         createUser("tiago.figueiredo", "tiago.figueiredo@tejodigital.pt", "Tiago Figueiredo",
-                MANAGER_PASSWORD, "MANAGER", tejoDigital, backendTejo);
+                MANAGER_PASSWORD, "MANAGER", tejoDigital, itTejo);
         createUser("ines.moura", "ines.moura@tejodigital.pt", "Inês Moura",
-                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, backendTejo);
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, itTejo);
+        createUser("miguel.rodrigues", "miguel.rodrigues@tejodigital.pt", "Miguel Rodrigues",
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, itTejo);
         createUser("andre.santos", "andre.santos@tejodigital.pt", "André Santos",
-                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, frontendTejo);
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, devOpsTejo);
         createUser("beatriz.lopes", "beatriz.lopes@tejodigital.pt", "Beatriz Lopes",
-                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, produtoTejo);
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, productTejo);
+        createUser("mariana.silva", "mariana.silva@tejodigital.pt", "Mariana Silva",
+                EMPLOYEE_PASSWORD, "MANAGER", tejoDigital, marketingTejo);
+        createUser("rui.fernandes", "rui.fernandes@tejodigital.pt", "Rui Fernandes",
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, marketingTejo);
+        createUser("catarina.sousa", "catarina.sousa@tejodigital.pt", "Catarina Sousa",
+                EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, financeTejo);
 
         createUser("joao.pereira", "joao.pereira@nortesoftware.pt", "João Pereira",
                 ADMIN_PASSWORD, "ADMIN", norteSoftware, null);
