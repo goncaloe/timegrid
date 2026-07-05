@@ -30,6 +30,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - JUnit e Mockito
 - PostgreSQL
 - React 19
+- TanStack Query
 - TypeScript
 - Vite
 
