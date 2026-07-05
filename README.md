@@ -98,3 +98,21 @@ npm run dev     # http://localhost:5173
 - Logout revoga o refresh token, mas o access token continua válido (no máximo 15 minutos). Este é o preço de um servidor stateless e do funcionamento do JWT.
 - CSRF desligado: Como estamos a usar JWT em que os tokens vem nos header dos pedidos, o browser não precisa enviar cookies, logo não se aplica este tipo de ataques.
 - Tratar exceções por falta de autenticação (401) e por falta de permissão (403) nos filtros do spring security e não no `@RestControllerAdvice`. Para os dois casos escrevem no `ProblemDetail` à mão para uniformizar o formato dos erros. Referência: https://devlach.com/blog/java/spring-security-custom-authentication-failure
+
+### 05 Julho (Frontend)
+
+- Usar proxy do Vite: reencaminhar pedidos ao backend `/api` no 8080. Frontend responde na porta 5173, sem problemas de CORS em desenvolvimento.
+- Centralizar todos os pedidos ao backend numa função apiFetch(), para gestão transparente dos tokens, erros, etc
+- Em cada pedido incluir o token de acesso JWT nos headers.
+- Em caso de token expirado recebe erro 401; faz um pedido de um novo token no `refreshAccessToken()`. Se resultado ok e faz novo pedido inicial novamente, só 1 retry no máximo. Se resultado do token falha, limpa tokens, dados de user, e redireciona para o /login.
+- Um problema comum em aplicações React com tokens JWT é que podem ocorrer pedidos em simultâneo quando o token expira. Neste caso, múltiplas chamadas `refreshAccessToken` seria um problema, porque cada token recebido invalida os anteriores. A solução para isso é usar o padrão Singleton Promise na na função `refreshAccessToken`: garante que só há um refreshPromise ativo, e os restantes pedidos esperam por ele. Mais informação: https://paths.grasp.study/modules/d5dc492c-bd15-408e-85f8-3c946cab85d3/lessons/79dfc6c3-5d88-42a1-88bb-d0505ab364e8 e também https://medium.com/@navinduamerasinghe/react-jwt-authentication-with-axios-handling-access-and-refresh-tokens-6882231af75c
+- Guardar o access token JWT numa variável em memória. Não sobrevive a um refresh do browser, mas é aceitável para um token de vida curta, e mais seguro do que guardar no localStorage ou cookie.
+- Guardar refresh token no localStorage.
+- Usar TanStack Query para gestão de estado dos pedidos, cache, erros, etc. Referências de implementação em https://medium.com/@ignatovich.dm/tanstack-query-a-powerful-tool-for-data-management-in-react-0c5ae6ef037c
+- Criar hooks das páginas, com a mesma estrutura: `const { data, isLoading, isError, error } = useAlgumaCoisa(...);`
+- Confirmações: usar window.confirm
+- Usar tipos TypeScript que refletem os DTOs
+- Usar CSS Modules com variáveis globais no :root.
+- Usar datas locais em vez de toISOString() que mostra datas no UCT.
+- Usar processamento de erros unificado com ProblemDetails usando o RFC 9457. Erros vêm como `application/problem+json`.
+- QueryClientProvider / `retry: false`: sem isto, o TanStack Query repete 3 vezes cada pedido falhado o que seria um problema em erros como 403 ou 422.
