@@ -8,8 +8,8 @@ import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.OrganizationRepository;
+import com.timegrid.security.CurrentUser;
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,17 +30,32 @@ class OrganizationServiceTest {
     @Mock
     private OrganizationRepository organizationRepository;
 
+    @Mock
+    private CurrentUser currentUser;
+
     @InjectMocks
     private OrganizationService organizationService;
 
     @Test
-    void findAllIgnoresDeletedOrganizations() {
+    void findCurrentReturnsOwnOrganization() {
+        UUID id = UUID.randomUUID();
         Organization active = new Organization();
-        active.setDeletedAt(null);
 
-        when(organizationRepository.findByDeletedAtIsNull()).thenReturn(List.of(active));
+        when(currentUser.organizationId()).thenReturn(id);
+        when(organizationRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(active));
 
-        assertThat(organizationService.findAll()).hasSize(1);
+        assertThat(organizationService.findCurrent()).isEqualTo(active);
+    }
+
+    @Test
+    void findByIdRejectsOtherOrganization() {
+        UUID ownId = UUID.randomUUID();
+        UUID otherId = UUID.randomUUID();
+
+        when(currentUser.organizationId()).thenReturn(ownId);
+
+        assertThatThrownBy(() -> organizationService.findById(otherId))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -87,6 +102,7 @@ class OrganizationServiceTest {
         UpdateOrganizationRequest request = new UpdateOrganizationRequest("Nova", "Atlantic/Azores",
                 OrganizationStatus.INACTIVE);
 
+        when(currentUser.organizationId()).thenReturn(id);
         when(organizationRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(organization));
         when(organizationRepository.existsByNameAndIdNot("Nova", id)).thenReturn(false);
         when(organizationRepository.save(any(Organization.class))).thenAnswer(i -> i.getArgument(0));
@@ -105,6 +121,7 @@ class OrganizationServiceTest {
         UpdateOrganizationRequest request = new UpdateOrganizationRequest("Nova", "Europe/Lisbon",
                 OrganizationStatus.ACTIVE);
 
+        when(currentUser.organizationId()).thenReturn(id);
         when(organizationRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(organization));
         when(organizationRepository.existsByNameAndIdNot("Nova", id)).thenReturn(true);
 
@@ -115,6 +132,7 @@ class OrganizationServiceTest {
     @Test
     void findByIdThrowsWhenNotExists() {
         UUID id = UUID.randomUUID();
+        when(currentUser.organizationId()).thenReturn(id);
         when(organizationRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> organizationService.findById(id))
@@ -126,6 +144,7 @@ class OrganizationServiceTest {
         UUID id = UUID.randomUUID();
         Organization organization = new Organization();
 
+        when(currentUser.organizationId()).thenReturn(id);
         when(organizationRepository.findByIdAndDeletedAtIsNull(id)).thenReturn(Optional.of(organization));
 
         organizationService.delete(id);
@@ -140,6 +159,7 @@ class OrganizationServiceTest {
         Organization organization = new Organization();
         organization.setDeletedAt(Instant.now());
 
+        when(currentUser.organizationId()).thenReturn(id);
         when(organizationRepository.findById(id)).thenReturn(Optional.of(organization));
         when(organizationRepository.save(any(Organization.class))).thenAnswer(i -> i.getArgument(0));
 

@@ -28,9 +28,7 @@ public class OrganizationController {
 
     @GetMapping
     public List<OrganizationResponse> findAll() {
-        return organizationService.findAll().stream()
-                .map(OrganizationResponse::from)
-                .toList();
+        return List.of(OrganizationResponse.from(organizationService.findCurrent()));
     }
 
     @GetMapping("/{id}")

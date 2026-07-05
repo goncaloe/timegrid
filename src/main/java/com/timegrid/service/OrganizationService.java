@@ -1,40 +1,39 @@
 package com.timegrid.service;
 
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.UUID;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.timegrid.dto.CreateOrganizationRequest;
 import com.timegrid.dto.UpdateOrganizationRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.enums.OrganizationStatus;
-import com.timegrid.repository.OrganizationRepository;
+import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
-import com.timegrid.exception.BusinessRuleException;
-import java.util.List;
-import java.util.UUID;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.DateTimeException;
+import com.timegrid.repository.OrganizationRepository;
+import com.timegrid.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class OrganizationService {
 
     private final OrganizationRepository organizationRepository;
+    private final CurrentUser currentUser;
 
     @Transactional(readOnly = true)
-    public List<Organization> findAll() {
-        return organizationRepository.findByDeletedAtIsNull();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Organization> findDeleted() {
-        return organizationRepository.findByDeletedAtIsNotNull();
+    public Organization findCurrent() {
+        return organizationRepository.findByIdAndDeletedAtIsNull(currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
     }
 
     @Transactional(readOnly = true)
     public Organization findById(UUID id) {
+        requireOwn(id);
         return organizationRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new NotFoundException("Organization not found.", id));
     }
@@ -80,15 +79,18 @@ public class OrganizationService {
 
     @Transactional
     public Organization restore(UUID id) {
+        requireOwn(id);
         Organization organization = organizationRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Organization not found.", id));
 
-        if (organization.getDeletedAt() == null) {
-            return organization;
-        }
-
         organization.setDeletedAt(null);
         return organizationRepository.save(organization);
+    }
+
+    private void requireOwn(UUID id) {
+        if (!id.equals(currentUser.organizationId())) {
+            throw new NotFoundException("Organization not found.", id);
+        }
     }
 
     private void validateTimezone(String timezone) {
