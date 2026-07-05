@@ -28,8 +28,8 @@ public class TeamController {
     private final TeamService teamService;
 
     @GetMapping
-    public List<TeamResponse> findByOrganization(@RequestParam UUID organizationId) {
-        return teamService.findByOrganization(organizationId).stream()
+	public List<TeamResponse> findAll() {
+		return teamService.findAll().stream()
                 .map(TeamResponse::from)
                 .toList();
     }

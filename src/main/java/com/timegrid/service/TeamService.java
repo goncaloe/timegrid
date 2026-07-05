@@ -7,6 +7,7 @@ import com.timegrid.entity.Team;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.TeamRepository;
+import com.timegrid.security.CurrentUser;
 import com.timegrid.exception.NotFoundException;
 import java.util.List;
 import java.util.UUID;
@@ -21,16 +22,17 @@ public class TeamService {
 
     private final TeamRepository teamRepository;
     private final OrganizationRepository organizationRepository;
+    private final CurrentUser currentUser;
 
     @Transactional(readOnly = true)
-    public List<Team> findByOrganization(UUID organizationId) {
-        return teamRepository.findByOrganizationIdAndDeletedAtIsNull(organizationId);
+    public List<Team> findAll() {
+        return teamRepository.findByOrganizationIdAndDeletedAtIsNull(currentUser.organizationId());
     }
 
     @Transactional
     public Team create(CreateTeamRequest request) {
-        Organization organization = organizationRepository.findById(request.organizationId())
-                .orElseThrow(() -> new NotFoundException("Organization not found.", request.organizationId()));
+        Organization organization = organizationRepository.findById(currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
 
         if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNull(
                 organization.getId(), request.name())) {
@@ -47,7 +49,7 @@ public class TeamService {
 
     @Transactional
     public Team update(UUID id, UpdateTeamRequest request) {
-        Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
+        Team team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("Team not found.", id));
 
         if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNullAndIdNot(
@@ -63,14 +65,14 @@ public class TeamService {
 
     @Transactional
     public void delete(UUID id) {
-        Team team = teamRepository.findByIdAndDeletedAtIsNull(id)
+        Team team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("Team not found.", id));
         team.setDeletedAt(Instant.now());
     }
 
     @Transactional
     public Team restore(UUID id) {
-        Team team = teamRepository.findById(id)
+        Team team = teamRepository.findByIdAndOrganizationId(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("Team not found.", id));
 
         team.setDeletedAt(null);
