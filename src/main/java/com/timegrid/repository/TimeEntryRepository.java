@@ -11,4 +11,6 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
     List<TimeEntry> findByUserIdAndWorkDateBetweenAndDeletedAtIsNullOrderByWorkDateAscStartTimeAsc(
             UUID userId, LocalDate from, LocalDate to);
 
+    List<TimeEntry> findByUserIdAndWorkDateAndDeletedAtIsNull(UUID userId, LocalDate workDate);
+
 }
