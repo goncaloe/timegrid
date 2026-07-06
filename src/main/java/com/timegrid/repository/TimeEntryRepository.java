@@ -15,4 +15,7 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
     List<TimeEntry> findByUserIdAndWorkDateAndDeletedAtIsNull(UUID userId, LocalDate workDate);
 
     Optional<TimeEntry> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
+
+    Optional<TimeEntry> findByIdAndOrganizationIdAndDeletedAtIsNull(UUID id, UUID organizationId);
+
 }

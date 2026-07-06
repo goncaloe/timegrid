@@ -1,6 +1,7 @@
 package com.timegrid.controller;
 
 import com.timegrid.dto.CreateTimeEntryRequest;
+import com.timegrid.dto.RejectTimeEntryRequest;
 import com.timegrid.dto.TimeEntryResponse;
 import com.timegrid.entity.TimeEntry;
 import com.timegrid.service.TimeEntryService;
@@ -48,5 +49,15 @@ public class TimeEntryController {
     @PostMapping("/{id}/submit")
     public TimeEntryResponse submit(@PathVariable UUID id) {
         return TimeEntryResponse.from(timeEntryService.submit(id));
+    }
+
+    @PostMapping("/{id}/approve")
+    public TimeEntryResponse approve(@PathVariable UUID id) {
+        return TimeEntryResponse.from(timeEntryService.approve(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    public TimeEntryResponse reject(@PathVariable UUID id, @Valid @RequestBody RejectTimeEntryRequest request) {
+        return TimeEntryResponse.from(timeEntryService.reject(id, request.reason()));
     }
 }

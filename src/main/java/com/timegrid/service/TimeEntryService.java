@@ -5,11 +5,13 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -64,11 +66,43 @@ public class TimeEntryService {
         return timeEntryRepository.save(entry);
     }
 
+    @Transactional
+    public TimeEntry approve(UUID id) {
+        TimeEntry entry = findSubmitted(id);
+        entry.setStatus(TimeEntryStatus.APPROVED);
+        entry.setApprover(userRepository.getReferenceById(currentUser.userId()));
+        entry.setApprovedAt(Instant.now());
+        entry.setRejectionReason(null);
+        return timeEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public TimeEntry reject(UUID id, String reason) {
+        TimeEntry entry = findSubmitted(id);
+        entry.setStatus(TimeEntryStatus.REJECTED);
+        entry.setRejectionReason(reason);
+        return timeEntryRepository.save(entry);
+    }
+
+    // TODO: os checks de aprovacao sao fixos aqui; passar para um motor de workflow quando existir implementacao
+    private TimeEntry findSubmitted(UUID id) {
+        TimeEntry entry = timeEntryRepository
+                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
+        if (entry.getStatus() != TimeEntryStatus.SUBMITTED) {
+            throw new BusinessRuleException("The entry is not in submit status.");
+        }
+        if (entry.getUser().getId().equals(currentUser.userId())) {
+            throw new ForbiddenException("You cannot approve or reject your own entries.");
+        }
+        return entry;
+    }
+
     private TimeEntry findEditable(UUID id) {
         TimeEntry entry = timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
+                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
         if (entry.getStatus() != TimeEntryStatus.DRAFT && entry.getStatus() != TimeEntryStatus.REJECTED) {
-            throw new BusinessRuleException("time-entry.not-editable");
+            throw new BusinessRuleException("Only draft or rejected entries can be edited, deleted or submitted.");
         }
         return entry;
     }
