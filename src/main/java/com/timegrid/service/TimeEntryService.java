@@ -59,6 +59,42 @@ public class TimeEntryService {
     }
 
     @Transactional
+    public TimeEntry update(UUID id, LocalDate workDate, LocalTime startTime, LocalTime endTime, int breakMinutes,
+            TimeEntryType type, String notes) {
+        TimeEntry entry = findEditable(id);
+
+        validateTimes(startTime, endTime, breakMinutes);
+        checkOverlap(entry.getUser().getId(), workDate, startTime, endTime, id);
+
+        entry.setWorkDate(workDate);
+        entry.setStartTime(startTime);
+        entry.setEndTime(endTime);
+        entry.setBreakMinutes(breakMinutes);
+        entry.setType(type);
+        entry.setNotes(notes);
+        if (entry.getStatus() == TimeEntryStatus.REJECTED) {
+            entry.setStatus(TimeEntryStatus.DRAFT);
+            entry.setRejectionReason(null);
+        }
+
+        return timeEntryRepository.save(entry);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        TimeEntry entry = findEditable(id);
+        entry.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public TimeEntry restore(UUID id) {
+        TimeEntry entry = timeEntryRepository.findByIdAndUserId(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
+        entry.setDeletedAt(null);
+        return timeEntryRepository.save(entry);
+    }
+
+    @Transactional
     public TimeEntry submit(UUID id) {
         TimeEntry entry = findEditable(id);
         entry.setStatus(TimeEntryStatus.SUBMITTED);
@@ -84,7 +120,8 @@ public class TimeEntryService {
         return timeEntryRepository.save(entry);
     }
 
-    // TODO: os checks de aprovacao sao fixos aqui; passar para um motor de workflow quando existir implementacao
+    // TODO: os checks de aprovacao sao fixos aqui; passar para um motor de workflow
+    // quando existir implementacao
     private TimeEntry findSubmitted(UUID id) {
         TimeEntry entry = timeEntryRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
