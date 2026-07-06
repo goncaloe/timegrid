@@ -4,6 +4,7 @@ import com.timegrid.entity.TimeEntry;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
@@ -13,4 +14,5 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
 
     List<TimeEntry> findByUserIdAndWorkDateAndDeletedAtIsNull(UUID userId, LocalDate workDate);
 
+    Optional<TimeEntry> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
 }

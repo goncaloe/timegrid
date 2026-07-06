@@ -56,6 +56,23 @@ public class TimeEntryService {
         return timeEntryRepository.save(entry);
     }
 
+    @Transactional
+    public TimeEntry submit(UUID id) {
+        TimeEntry entry = findEditable(id);
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+        entry.setRejectionReason(null);
+        return timeEntryRepository.save(entry);
+    }
+
+    private TimeEntry findEditable(UUID id) {
+        TimeEntry entry = timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
+        if (entry.getStatus() != TimeEntryStatus.DRAFT && entry.getStatus() != TimeEntryStatus.REJECTED) {
+            throw new BusinessRuleException("time-entry.not-editable");
+        }
+        return entry;
+    }
+
     private void validateTimes(LocalTime startTime, LocalTime endTime, int breakMinutes) {
         if (!endTime.isAfter(startTime)) {
             throw new BusinessRuleException("The end time must be after the start time.");
