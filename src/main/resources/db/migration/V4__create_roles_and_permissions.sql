@@ -34,7 +34,8 @@ insert into permissions (id, name, description) values
     (gen_random_uuid(), 'user:read', 'view users'),
     (gen_random_uuid(), 'user:write', 'create and edit users'),
     (gen_random_uuid(), 'team:write', 'create and edit teams'),
-    (gen_random_uuid(), 'organization:write', 'edit organizations');
+    (gen_random_uuid(), 'organization:write', 'edit organizations'),
+    (gen_random_uuid(), 'time_entry:approve', 'approve time entries');
 
 insert into role_permissions (role_id, permission_id)
 select r.id, p.id 
@@ -45,4 +46,4 @@ insert into role_permissions (role_id, permission_id)
 select r.id, p.id 
 from roles r, permissions p
 where r.name = 'MANAGER'
-  and p.name in ('user:read', 'team:write');
+  and p.name in ('user:read', 'team:write', 'time_entry:approve');
