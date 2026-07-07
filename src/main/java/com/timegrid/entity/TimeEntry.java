@@ -24,7 +24,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class TimeEntry extends BaseEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
