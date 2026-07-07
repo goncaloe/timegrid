@@ -9,6 +9,8 @@ import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.validation.FieldError;
@@ -20,6 +22,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import tools.jackson.databind.exc.InvalidFormatException;
 
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class ApiExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
