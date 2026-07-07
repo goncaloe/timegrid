@@ -1,3 +1,4 @@
+// FIXME: rever a validacao de sobreposicoes com calma
 package com.timegrid.service;
 
 import com.timegrid.entity.TimeEntry;
