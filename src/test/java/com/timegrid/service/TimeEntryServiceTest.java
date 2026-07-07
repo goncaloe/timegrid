@@ -6,6 +6,8 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.exception.ForbiddenException;
+import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
@@ -171,6 +173,159 @@ class TimeEntryServiceTest {
         TimeEntry restored = timeEntryService.restore(id);
 
         assertThat(restored.getDeletedAt()).isNull();
+    }
+
+    @Test
+    void submitMovesDraftToSubmitted() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setStatus(TimeEntryStatus.DRAFT);
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(entry));
+        when(timeEntryRepository.save(any(TimeEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TimeEntry submitted = timeEntryService.submit(id);
+
+        assertThat(submitted.getStatus()).isEqualTo(TimeEntryStatus.SUBMITTED);
+    }
+
+    @Test
+    void submitRejectsWhenAlreadySubmitted() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(entry));
+
+        assertThatThrownBy(() -> timeEntryService.submit(id))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void approveSetsApproverAndStatus() {
+        UUID organizationId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(ownerId));
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(currentUser.userId()).thenReturn(approverId);
+        when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(entry));
+        when(userRepository.getReferenceById(approverId)).thenReturn(userWithId(approverId));
+        when(timeEntryRepository.save(any(TimeEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TimeEntry approved = timeEntryService.approve(id);
+
+        assertThat(approved.getStatus()).isEqualTo(TimeEntryStatus.APPROVED);
+        assertThat(approved.getApprover().getId()).isEqualTo(approverId);
+        assertThat(approved.getApprovedAt()).isNotNull();
+    }
+
+    @Test
+    void approveRejectsOwnEntry() {
+        UUID organizationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(userId));
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(currentUser.userId()).thenReturn(userId);
+        when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(entry));
+
+        assertThatThrownBy(() -> timeEntryService.approve(id))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void approveRejectsWhenNotSubmitted() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(UUID.randomUUID()));
+        entry.setStatus(TimeEntryStatus.DRAFT);
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(entry));
+
+        assertThatThrownBy(() -> timeEntryService.approve(id))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void rejectSetsReasonAndStatus() {
+        UUID organizationId = UUID.randomUUID();
+        UUID approverId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(ownerId));
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(currentUser.userId()).thenReturn(approverId);
+        when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(entry));
+        when(timeEntryRepository.save(any(TimeEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TimeEntry rejected = timeEntryService.reject(id, "There are missing justified hours");
+
+        assertThat(rejected.getStatus()).isEqualTo(TimeEntryStatus.REJECTED);
+        assertThat(rejected.getRejectionReason()).isEqualTo("There are missing justified hours");
+    }
+
+    @Test
+    void rejectRejectsOwnEntry() {
+        UUID organizationId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(userId));
+        entry.setStatus(TimeEntryStatus.SUBMITTED);
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(currentUser.userId()).thenReturn(userId);
+        when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(entry));
+
+        assertThatThrownBy(() -> timeEntryService.reject(id, "reason"))
+                .isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void findPendingDelegatesToRepositoryWithSubmittedStatus() {
+        UUID organizationId = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        TimeEntry entry = new TimeEntry();
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(timeEntryRepository.findPending(organizationId, TimeEntryStatus.SUBMITTED, teamId))
+                .thenReturn(List.of(entry));
+
+        assertThat(timeEntryService.findPending(teamId)).containsExactly(entry);
+    }
+
+    @Test
+    void restoreThrowsWhenEntryBelongsToAnotherUser() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(timeEntryRepository.findByIdAndUserId(id, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> timeEntryService.restore(id))
+                .isInstanceOf(NotFoundException.class);
     }
 
 }
