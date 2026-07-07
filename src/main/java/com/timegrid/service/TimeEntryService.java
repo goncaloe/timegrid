@@ -35,6 +35,11 @@ public class TimeEntryService {
                 currentUser.userId(), from, to);
     }
 
+    @Transactional(readOnly = true)
+    public List<TimeEntry> findPending(UUID teamId) {
+        return timeEntryRepository.findPending(currentUser.organizationId(), TimeEntryStatus.SUBMITTED, teamId);
+    }
+
     @Transactional
     public TimeEntry create(LocalDate workDate, LocalTime startTime, LocalTime endTime, int breakMinutes,
             TimeEntryType type, String notes) {

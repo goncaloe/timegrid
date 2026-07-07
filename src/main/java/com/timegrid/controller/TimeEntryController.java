@@ -39,6 +39,13 @@ public class TimeEntryController {
                 .toList();
     }
 
+	@GetMapping("/pending")
+	public List<TimeEntryResponse> pending(@RequestParam(required = false) UUID teamId) {
+		return timeEntryService.findPending(teamId).stream()
+				.map(TimeEntryResponse::from)
+				.toList();
+	}
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TimeEntryResponse create(@Valid @RequestBody CreateTimeEntryRequest request) {
