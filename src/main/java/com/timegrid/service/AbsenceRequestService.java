@@ -80,6 +80,20 @@ public class AbsenceRequestService {
         return absenceRequestRepository.save(request);
     }
 
+    @Transactional
+    public AbsenceRequest cancel(UUID id) {
+        AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+        if (request.getStatus() != AbsenceStatus.SUBMITTED && request.getStatus() != AbsenceStatus.APPROVED) {
+            throw new BusinessRuleException("Only submitted or approved requests can be cancelled.");
+        }
+        if (!request.getStartDate().isAfter(LocalDate.now())) {
+            throw new BusinessRuleException("This request can only be cancelled before it starts.");
+        }
+        request.setStatus(AbsenceStatus.CANCELLED);
+        return absenceRequestRepository.save(request);
+    }
+
     private AbsenceRequest findSubmitted(UUID id) {
         AbsenceRequest request = absenceRequestRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())

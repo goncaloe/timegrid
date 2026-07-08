@@ -2,6 +2,7 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.AbsenceRequestResponse;
 import com.timegrid.dto.CreateAbsenceRequestRequest;
+import com.timegrid.dto.RejectAbsenceRequestRequest;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.service.AbsenceRequestService;
 import jakarta.validation.Valid;
@@ -42,6 +43,11 @@ public class AbsenceRequestController {
     @PostMapping("/{id}/submit")
     public AbsenceRequestResponse submit(@PathVariable UUID id) {
         return AbsenceRequestResponse.from(absenceRequestService.submit(id));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public AbsenceRequestResponse cancel(@PathVariable UUID id) {
+        return AbsenceRequestResponse.from(absenceRequestService.cancel(id));
     }
 
     @PostMapping("/{id}/approve")
