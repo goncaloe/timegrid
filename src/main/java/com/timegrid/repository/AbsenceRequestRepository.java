@@ -1,6 +1,7 @@
 package com.timegrid.repository;
 
 import com.timegrid.entity.AbsenceRequest;
+import com.timegrid.enums.AbsenceStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -10,5 +11,7 @@ public interface AbsenceRequestRepository extends JpaRepository<AbsenceRequest, 
 
     List<AbsenceRequest> findByUserIdAndDeletedAtIsNullAndStartDateBetweenOrderByStartDateAsc(
             UUID userId, LocalDate from, LocalDate to);
+
+    List<AbsenceRequest> findByUserIdAndDeletedAtIsNullAndStatusNotIn(UUID userId, List<AbsenceStatus> statuses);
 
 }
