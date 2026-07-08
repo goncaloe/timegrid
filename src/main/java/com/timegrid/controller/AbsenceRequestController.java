@@ -9,6 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +37,22 @@ public class AbsenceRequestController {
         AbsenceRequest absenceRequest = absenceRequestService.create(
                 request.startDate(), request.endDate(), request.type(), request.notes());
         return AbsenceRequestResponse.from(absenceRequest);
+    }
+
+    @PostMapping("/{id}/submit")
+    public AbsenceRequestResponse submit(@PathVariable UUID id) {
+        return AbsenceRequestResponse.from(absenceRequestService.submit(id));
+    }
+
+    @PostMapping("/{id}/approve")
+    public AbsenceRequestResponse approve(@PathVariable UUID id) {
+        return AbsenceRequestResponse.from(absenceRequestService.approve(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    public AbsenceRequestResponse reject(@PathVariable UUID id,
+            @Valid @RequestBody RejectAbsenceRequestRequest request) {
+        return AbsenceRequestResponse.from(absenceRequestService.reject(id, request.reason()));
     }
 
 }

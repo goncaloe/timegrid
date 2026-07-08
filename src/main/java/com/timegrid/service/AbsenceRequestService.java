@@ -5,10 +5,13 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
+
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +52,54 @@ public class AbsenceRequestService {
         request.setStatus(AbsenceStatus.DRAFT);
 
         return absenceRequestRepository.save(request);
+    }
+
+    @Transactional
+    public AbsenceRequest submit(UUID id) {
+        AbsenceRequest request = findEditable(id);
+        request.setStatus(AbsenceStatus.SUBMITTED);
+        request.setRejectionReason(null);
+        return absenceRequestRepository.save(request);
+    }
+
+    @Transactional
+    public AbsenceRequest approve(UUID id) {
+        AbsenceRequest request = findSubmitted(id);
+        request.setStatus(AbsenceStatus.APPROVED);
+        request.setApprover(userRepository.getReferenceById(currentUser.userId()));
+        request.setApprovedAt(Instant.now());
+        request.setRejectionReason(null);
+        return absenceRequestRepository.save(request);
+    }
+
+    @Transactional
+    public AbsenceRequest reject(UUID id, String reason) {
+        AbsenceRequest request = findSubmitted(id);
+        request.setStatus(AbsenceStatus.REJECTED);
+        request.setRejectionReason(reason);
+        return absenceRequestRepository.save(request);
+    }
+
+    private AbsenceRequest findSubmitted(UUID id) {
+        AbsenceRequest request = absenceRequestRepository
+                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+        if (request.getStatus() != AbsenceStatus.SUBMITTED) {
+            throw new BusinessRuleException("This request is not submitted for approval.");
+        }
+        if (request.getUser().getId().equals(currentUser.userId())) {
+            throw new ForbiddenException("You cannot approve or reject your own requests.");
+        }
+        return request;
+    }
+
+    private AbsenceRequest findEditable(UUID id) {
+        AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+        if (request.getStatus() != AbsenceStatus.DRAFT && request.getStatus() != AbsenceStatus.REJECTED) {
+            throw new BusinessRuleException("Only draft or rejected requests can be edited, deleted or submitted.");
+        }
+        return request;
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {
