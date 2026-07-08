@@ -116,3 +116,20 @@ npm run dev     # http://localhost:5173
 - Usar datas locais em vez de toISOString() que mostra datas no UCT.
 - Usar processamento de erros unificado com ProblemDetails usando o RFC 9457. Erros vêm como `application/problem+json`.
 - QueryClientProvider / `retry: false`: sem isto, o TanStack Query repete 3 vezes cada pedido falhado o que seria um problema em erros como 403 ou 422.
+
+### 08 Julho
+
+- Criar tabela `time_entries` com registo de horas, cada registo o dia especifico e o intervalo correspondente com hora de entrada e hora de saída. Incluir um campo `break_minutes` para pausa dentro do intervalo do registo. Pode haver mais de um registo por dia, mas não sobrepor horas.
+- Criar tabela `absents_requests` para registo de ausências. Guardar intervalo de dadas (dia do início e dia do fim).
+- Ambas as entidades devem aplicar múltiplas regras de negócio indicadas abaixo.
+- Não pode haver sobreposição de intervalos nos registos (verificar horas e datas) para a mesma pessoa, excepto para registos apagados.
+- Registos de entrada / ausências podem ter multiplos estados. Minha proposta:
+![estado_registos.png.png](docs/images/estado_registos.png)
+- Estados de ambos os registos semelhantes, mas registo de ausências terá ainda o estado adicional `CANCELED`.
+- Nenhum colaborador pode aprovar nem rejeitar os próprios pedidos.
+- Haverá transições de estado que só serão permitidas para determinados perfis de utilizador (role).
+- Editar ou apagar registos só é possível em `DRAFT` ou `REJECTED`
+- Editar um registo `REJECTED` volta a pô-lo em `DRAFT` e limpa o motivo da rejeição
+- Estado `APPROVED` é final.
+- Pensar em criar uma máquina de estados para desacoplar a complexidade nos services para transição de estados.
+- Registo de ausências deve calcular número de dias úteis: nº de dias entre o inicio e o fim (inclusive) que são seguda-sexta e não são feriado (nacional ou da organização). Será depois usado no cálculo do banco de horas a implementar mais tarde.
