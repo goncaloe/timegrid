@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,22 +39,26 @@ public class OrganizationController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('organization:write')")
     public OrganizationResponse create(@Valid @RequestBody CreateOrganizationRequest request) {
         return OrganizationResponse.from(organizationService.create(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('organization:write')")
     public OrganizationResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateOrganizationRequest request) {
         return OrganizationResponse.from(organizationService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('organization:write')")
     public void delete(@PathVariable UUID id) {
         organizationService.delete(id);
     }
 
     @PostMapping("/{id}/restore")
+    @PreAuthorize("hasAuthority('organization:write')")
     public OrganizationResponse restore(@PathVariable UUID id) {
         return OrganizationResponse.from(organizationService.restore(id));
     }
