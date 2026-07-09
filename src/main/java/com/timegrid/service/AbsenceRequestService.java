@@ -81,6 +81,39 @@ public class AbsenceRequestService {
     }
 
     @Transactional
+    public AbsenceRequest update(UUID id, LocalDate startDate, LocalDate endDate, AbsenceType type, String notes) {
+        AbsenceRequest request = findEditable(id);
+
+        validateDates(startDate, endDate);
+        checkOverlap(request.getUser().getId(), startDate, endDate, id);
+
+        request.setStartDate(startDate);
+        request.setEndDate(endDate);
+        request.setType(type);
+        request.setNotes(notes);
+        if (request.getStatus() == AbsenceStatus.REJECTED) {
+            request.setStatus(AbsenceStatus.DRAFT);
+            request.setRejectionReason(null);
+        }
+
+        return absenceRequestRepository.save(request);
+    }
+
+    @Transactional
+    public void delete(UUID id) {
+        AbsenceRequest request = findEditable(id);
+        request.setDeletedAt(Instant.now());
+    }
+
+    @Transactional
+    public AbsenceRequest restore(UUID id) {
+        AbsenceRequest request = absenceRequestRepository.findByIdAndUserId(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+        request.setDeletedAt(null);
+        return absenceRequestRepository.save(request);
+    }
+
+    @Transactional
     public AbsenceRequest cancel(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
                 .orElseThrow(() -> new NotFoundException("Absence request not found.", id));

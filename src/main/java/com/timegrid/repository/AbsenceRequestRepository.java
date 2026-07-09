@@ -19,4 +19,6 @@ public interface AbsenceRequestRepository extends JpaRepository<AbsenceRequest, 
 
     Optional<AbsenceRequest> findByIdAndOrganizationIdAndDeletedAtIsNull(UUID id, UUID organizationId);
 
+    Optional<AbsenceRequest> findByIdAndUserId(UUID id, UUID userId);
+
 }
