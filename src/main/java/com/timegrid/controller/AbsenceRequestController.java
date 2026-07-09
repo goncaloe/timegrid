@@ -8,6 +8,7 @@ import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.service.AbsenceRequestService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;

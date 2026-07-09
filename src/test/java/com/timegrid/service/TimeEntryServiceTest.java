@@ -11,6 +11,7 @@ import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
+import com.timegrid.service.ApprovalPolicy;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -25,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,6 +40,9 @@ class TimeEntryServiceTest {
 
     @Mock
     private CurrentUser currentUser;
+
+    @Mock
+    private ApprovalPolicy approvalPolicy;
 
     @InjectMocks
     private TimeEntryService timeEntryService;
@@ -239,9 +244,10 @@ class TimeEntryServiceTest {
         entry.setStatus(TimeEntryStatus.SUBMITTED);
 
         when(currentUser.organizationId()).thenReturn(organizationId);
-        when(currentUser.userId()).thenReturn(userId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
+        doThrow(new ForbiddenException("You cannot approve or reject your own entries."))
+                .when(approvalPolicy).checkNotOwnRequest(userId, "You cannot approve or reject your own entries.");
 
         assertThatThrownBy(() -> timeEntryService.approve(id))
                 .isInstanceOf(ForbiddenException.class);
@@ -266,7 +272,6 @@ class TimeEntryServiceTest {
     @Test
     void rejectSetsReasonAndStatus() {
         UUID organizationId = UUID.randomUUID();
-        UUID approverId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
         TimeEntry entry = new TimeEntry();
@@ -274,7 +279,6 @@ class TimeEntryServiceTest {
         entry.setStatus(TimeEntryStatus.SUBMITTED);
 
         when(currentUser.organizationId()).thenReturn(organizationId);
-        when(currentUser.userId()).thenReturn(approverId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
         when(timeEntryRepository.save(any(TimeEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -295,9 +299,10 @@ class TimeEntryServiceTest {
         entry.setStatus(TimeEntryStatus.SUBMITTED);
 
         when(currentUser.organizationId()).thenReturn(organizationId);
-        when(currentUser.userId()).thenReturn(userId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
+        doThrow(new ForbiddenException("You cannot approve or reject your own entries."))
+                .when(approvalPolicy).checkNotOwnRequest(userId, "You cannot approve or reject your own entries.");
 
         assertThatThrownBy(() -> timeEntryService.reject(id, "reason"))
                 .isInstanceOf(ForbiddenException.class);

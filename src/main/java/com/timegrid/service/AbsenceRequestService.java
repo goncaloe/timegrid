@@ -5,12 +5,10 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
 import com.timegrid.exception.BusinessRuleException;
-import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,6 +24,7 @@ public class AbsenceRequestService {
     private final AbsenceRequestRepository absenceRequestRepository;
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
+    private final ApprovalPolicy approvalPolicy;
 
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findOwn(Integer year) {
@@ -139,9 +138,7 @@ public class AbsenceRequestService {
         if (request.getStatus() != AbsenceStatus.SUBMITTED) {
             throw new BusinessRuleException("This request is not submitted for approval.");
         }
-        if (request.getUser().getId().equals(currentUser.userId())) {
-            throw new ForbiddenException("You cannot approve or reject your own requests.");
-        }
+        approvalPolicy.checkNotOwnRequest(request.getUser().getId(), "You cannot approve or reject your own requests.");
         return request;
     }
 

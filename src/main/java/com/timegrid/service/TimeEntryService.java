@@ -5,7 +5,6 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.exception.BusinessRuleException;
-import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
@@ -27,6 +26,7 @@ public class TimeEntryService {
     private final TimeEntryRepository timeEntryRepository;
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
+    private final ApprovalPolicy approvalPolicy;
 
     @Transactional(readOnly = true)
     public List<TimeEntry> findOwn(LocalDate from, LocalDate to) {
@@ -133,9 +133,7 @@ public class TimeEntryService {
         if (entry.getStatus() != TimeEntryStatus.SUBMITTED) {
             throw new BusinessRuleException("The entry is not in submit status.");
         }
-        if (entry.getUser().getId().equals(currentUser.userId())) {
-            throw new ForbiddenException("You cannot approve or reject your own entries.");
-        }
+        approvalPolicy.checkNotOwnRequest(entry.getUser().getId(), "You cannot approve or reject your own entries.");
         return entry;
     }
 
