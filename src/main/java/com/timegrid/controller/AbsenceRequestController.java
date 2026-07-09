@@ -35,6 +35,12 @@ public class AbsenceRequestController {
                 .toList();
     }
 
+    public List<AbsenceRequestResponse> pending(@RequestParam(required = false) UUID teamId) {
+        return absenceRequestService.findPending(teamId).stream()
+                .map(AbsenceRequestResponse::from)
+                .toList();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AbsenceRequestResponse create(@Valid @RequestBody CreateAbsenceRequestRequest request) {

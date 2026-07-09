@@ -34,6 +34,11 @@ public class AbsenceRequestService {
                 currentUser.userId(), LocalDate.of(requestedYear, 1, 1), LocalDate.of(requestedYear, 12, 31));
     }
 
+    @Transactional(readOnly = true)
+    public List<AbsenceRequest> findPending(UUID teamId) {
+        return absenceRequestRepository.findPending(currentUser.organizationId(), AbsenceStatus.SUBMITTED, teamId);
+    }
+
     @Transactional
     public AbsenceRequest create(LocalDate startDate, LocalDate endDate, AbsenceType type, String notes) {
         User user = userRepository.findById(currentUser.userId())
