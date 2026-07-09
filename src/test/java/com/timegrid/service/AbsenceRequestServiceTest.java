@@ -7,6 +7,7 @@ import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
+import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
@@ -99,6 +100,88 @@ class AbsenceRequestServiceTest {
 
         assertThat(created.getStatus()).isEqualTo(AbsenceStatus.DRAFT);
         assertThat(created.getOrganization()).isEqualTo(user.getOrganization());
+    }
+
+    @Test
+    void updateRejectsWhenNotDraftOrRejected() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setStatus(AbsenceStatus.SUBMITTED);
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> absenceRequestService.update(
+                id, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 5), AbsenceType.VACATION, null))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void updateResetsRejectedRequestToDraft() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setUser(userWithId(userId));
+        request.setStatus(AbsenceStatus.REJECTED);
+        request.setRejectionReason("motivo antigo");
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+        when(absenceRequestRepository.findByUserIdAndDeletedAtIsNullAndStatusNotIn(
+                userId, List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED)))
+                .thenReturn(List.of());
+        when(absenceRequestRepository.save(any(AbsenceRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AbsenceRequest updated = absenceRequestService.update(
+                id, LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 5), AbsenceType.VACATION, null);
+
+        assertThat(updated.getStatus()).isEqualTo(AbsenceStatus.DRAFT);
+        assertThat(updated.getRejectionReason()).isNull();
+    }
+
+    @Test
+    void deleteRejectsWhenNotDraftOrRejected() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setStatus(AbsenceStatus.APPROVED);
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> absenceRequestService.delete(id))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void restoreClearsDeletedAt() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setDeletedAt(java.time.Instant.now());
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserId(id, userId)).thenReturn(Optional.of(request));
+        when(absenceRequestRepository.save(any(AbsenceRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AbsenceRequest restored = absenceRequestService.restore(id);
+
+        assertThat(restored.getDeletedAt()).isNull();
+    }
+
+    @Test
+    void restoreThrowsWhenRequestBelongsToAnotherUser() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserId(id, userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> absenceRequestService.restore(id))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
@@ -211,6 +294,54 @@ class AbsenceRequestServiceTest {
 
         assertThat(rejected.getStatus()).isEqualTo(AbsenceStatus.REJECTED);
         assertThat(rejected.getRejectionReason()).isEqualTo("there are not enough vacation days available");
+    }
+
+    @Test
+    void cancelSucceedsBeforeStartDate() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setStatus(AbsenceStatus.APPROVED);
+        request.setStartDate(LocalDate.now().plusDays(5));
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+        when(absenceRequestRepository.save(any(AbsenceRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AbsenceRequest cancelled = absenceRequestService.cancel(id);
+
+        assertThat(cancelled.getStatus()).isEqualTo(AbsenceStatus.CANCELLED);
+    }
+
+    @Test
+    void cancelRejectsWhenStartDateAlreadyArrived() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setStatus(AbsenceStatus.APPROVED);
+        request.setStartDate(LocalDate.now());
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> absenceRequestService.cancel(id))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void cancelRejectsWhenNotSubmittedOrApproved() {
+        UUID userId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        AbsenceRequest request = new AbsenceRequest();
+        request.setStatus(AbsenceStatus.DRAFT);
+        request.setStartDate(LocalDate.now().plusDays(5));
+
+        when(currentUser.userId()).thenReturn(userId);
+        when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+
+        assertThatThrownBy(() -> absenceRequestService.cancel(id))
+                .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
