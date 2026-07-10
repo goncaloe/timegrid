@@ -134,3 +134,9 @@ npm run dev     # http://localhost:5173
 - Estado `APPROVED` é final.
 - Pensar em criar uma máquina de estados para desacoplar a complexidade nos services para transição de estados.
 - Registo de ausências deve calcular número de dias úteis: nº de dias entre o inicio e o fim (inclusive) que são seguda-sexta e não são feriado (nacional ou da organização). Será depois usado no cálculo do banco de horas a implementar mais tarde.
+
+### 10 Julho
+
+- Preferir proteções por permissão nos métodos de controllers com `@PreAuthorize` e não por role. Desta forma, as regras do que cada perfil pode fazer fica numa tabela da bd, em vez de espalhado no código. Dar uma permissão nova é uma migração, sem mexer no java.
+- Tradução i18n das mensagens de erro, com deteção do Locale do utilizador conforme o `Accept-Language`. Usar `Locale.ENGLISH` como fallback.
+- Centralizar regras de negócio repetidas numa classe comum `ApprovalPolicy`: princípio DRY.
