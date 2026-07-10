@@ -53,6 +53,14 @@ npm install
 npm run dev     # http://localhost:5173
 ```
 
+A base de dados arranca com dados de demonstração: 3 organizações, utilizadores e departamentos.
+
+| Perfil | Utilizador | Password |
+|---|---|---|
+| Admin | `goncalo.esteves` | `timegrid2026` |
+| Manager | `tiago.figueiredo` | `gestor123` |
+| Employee | `ines.moura` | `equipa2026` |
+
 ## Especificações, ADRs e Outras Considerações
 
 ### 25 Junho
