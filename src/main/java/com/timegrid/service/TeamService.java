@@ -32,11 +32,11 @@ public class TeamService {
     @Transactional
     public Team create(CreateTeamRequest request) {
         Organization organization = organizationRepository.findById(currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
+                .orElseThrow(() -> new NotFoundException("organization.not-found", currentUser.organizationId()));
 
         if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNull(
                 organization.getId(), request.name())) {
-            throw new ConflictException("A team with this name already exists in this organization.");
+            throw new ConflictException("team.name.taken");
         }
 
         Team team = new Team();
@@ -50,11 +50,11 @@ public class TeamService {
     @Transactional
     public Team update(UUID id, UpdateTeamRequest request) {
         Team team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Team not found.", id));
+                .orElseThrow(() -> new NotFoundException("user.not-found", id));
 
         if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNullAndIdNot(
                 team.getOrganization().getId(), request.name(), id)) {
-            throw new ConflictException("A team with this name already exists in this organization.");
+            throw new ConflictException("team.name.taken");
         }
 
         team.setName(request.name());
@@ -66,14 +66,14 @@ public class TeamService {
     @Transactional
     public void delete(UUID id) {
         Team team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Team not found.", id));
+                .orElseThrow(() -> new NotFoundException("team.not-found", id));
         team.setDeletedAt(Instant.now());
     }
 
     @Transactional
     public Team restore(UUID id) {
         Team team = teamRepository.findByIdAndOrganizationId(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Team not found.", id));
+                .orElseThrow(() -> new NotFoundException("team.not-found", id));
 
         team.setDeletedAt(null);
         return teamRepository.save(team);

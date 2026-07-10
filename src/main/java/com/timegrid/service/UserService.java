@@ -39,20 +39,20 @@ public class UserService {
     @Transactional
     public User create(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new ConflictException("This username is already in use.");
+            throw new ConflictException("user.username.taken");
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new ConflictException("This email is already in use.");
+            throw new ConflictException("user.email.taken");
         }
 
         Organization organization = organizationRepository.findById(currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
+                .orElseThrow(() -> new NotFoundException("organization.not-found", currentUser.organizationId()));
 
         Team team = null;
         if (request.teamId() != null) {
             team = teamRepository
                     .findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
-                    .orElseThrow(() -> new NotFoundException("Team not found.", request.teamId()));
+                    .orElseThrow(() -> new NotFoundException("team.not-found", request.teamId()));
         }
 
         Role defaultRole = roleRepository.findByName(DEFAULT_ROLE)
@@ -78,7 +78,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User findById(UUID id) {
         return userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("User not found.", id));
+                .orElseThrow(() -> new NotFoundException("user.not-found", id));
     }
 
     @Transactional
@@ -103,7 +103,7 @@ public class UserService {
     @Transactional
     public User restore(UUID id) {
         User user = userRepository.findByIdAndOrganizationId(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("User not found.", id));
+                .orElseThrow(() -> new NotFoundException("user.not-found", id));
 
         user.setDeletedAt(null);
         return userRepository.save(user);

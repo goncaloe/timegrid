@@ -28,14 +28,14 @@ public class OrganizationService {
     @Transactional(readOnly = true)
     public Organization findCurrent() {
         return organizationRepository.findByIdAndDeletedAtIsNull(currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Organization not found.", currentUser.organizationId()));
+                .orElseThrow(() -> new NotFoundException("organization.not-found", currentUser.organizationId()));
     }
 
     @Transactional(readOnly = true)
     public Organization findById(UUID id) {
         requireOwn(id);
         return organizationRepository.findByIdAndDeletedAtIsNull(id)
-                .orElseThrow(() -> new NotFoundException("Organization not found.", id));
+                .orElseThrow(() -> new NotFoundException("organization.not-found", id));
     }
 
     @Transactional
@@ -43,7 +43,7 @@ public class OrganizationService {
         validateTimezone(request.timezone());
 
         if (organizationRepository.existsByName(request.name())) {
-            throw new ConflictException("There is already an organization with this name.");
+            throw new ConflictException("organization.name.taken");
         }
 
         Organization organization = new Organization();
@@ -61,7 +61,7 @@ public class OrganizationService {
         validateTimezone(request.timezone());
 
         if (organizationRepository.existsByNameAndIdNot(request.name(), id)) {
-            throw new ConflictException("There is already an organization with this name.");
+            throw new ConflictException("organization.name.taken");
         }
 
         organization.setName(request.name());
@@ -81,7 +81,7 @@ public class OrganizationService {
     public Organization restore(UUID id) {
         requireOwn(id);
         Organization organization = organizationRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Organization not found.", id));
+                .orElseThrow(() -> new NotFoundException("organization.not-found", id));
 
         organization.setDeletedAt(null);
         return organizationRepository.save(organization);
@@ -89,7 +89,7 @@ public class OrganizationService {
 
     private void requireOwn(UUID id) {
         if (!id.equals(currentUser.organizationId())) {
-            throw new NotFoundException("Organization not found.", id);
+            throw new NotFoundException("organization.not-found", id);
         }
     }
 
@@ -97,7 +97,7 @@ public class OrganizationService {
         try {
             ZoneId.of(timezone);
         } catch (DateTimeException ex) {
-            throw new BusinessRuleException("Unknown timezone.", timezone);
+            throw new BusinessRuleException("organization.invalid.timezone", timezone);
         }
     }
 

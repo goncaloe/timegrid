@@ -41,7 +41,7 @@ public class AbsenceRequestService {
     @Transactional
     public AbsenceRequest create(LocalDate startDate, LocalDate endDate, AbsenceType type, String notes) {
         User user = userRepository.findById(currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("User not found.", currentUser.userId()));
+                .orElseThrow(() -> new NotFoundException("team.not-found", currentUser.userId()));
 
         validateDates(startDate, endDate);
         checkOverlap(user.getId(), startDate, endDate, null);

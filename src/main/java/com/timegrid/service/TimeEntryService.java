@@ -43,7 +43,7 @@ public class TimeEntryService {
     public TimeEntry create(LocalDate workDate, LocalTime startTime, LocalTime endTime, int breakMinutes,
             TimeEntryType type, String notes) {
         User user = userRepository.findById(currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("User not found.", currentUser.userId()));
+                .orElseThrow(() -> new NotFoundException("user.not-found", currentUser.userId()));
 
         validateTimes(startTime, endTime, breakMinutes);
         checkOverlap(user.getId(), workDate, startTime, endTime, null);
