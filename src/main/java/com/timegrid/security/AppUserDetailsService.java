@@ -20,14 +20,14 @@ public class AppUserDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsernameOrEmailIgnoreCase(username, username)
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
+                .orElseThrow(() -> new UsernameNotFoundException("user.credentials.invalid"));
         return new AppUserDetails(user);
     }
 
     @Transactional(readOnly = true)
     public UserDetails loadUserById(UUID id) {
         User user = userRepository.findForAuthById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("Invalid username or password."));
+                .orElseThrow(() -> new UsernameNotFoundException("user.credentials.invalid"));
         return new AppUserDetails(user);
     }
 
