@@ -12,10 +12,10 @@ import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
-
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -79,6 +79,19 @@ public class UserService {
     public User findById(UUID id) {
         return userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("User not found.", id));
+    }
+
+    @Transactional
+    public User updateRoles(UUID id, Set<String> roleNames) {
+        User user = findById(id);
+
+        Set<Role> roles = roleNames.stream()
+                .map(name -> roleRepository.findByName(name)
+                        .orElseThrow(() -> new NotFoundException("Role not found.", name)))
+                .collect(Collectors.toSet());
+
+        user.setRoles(roles);
+        return userRepository.save(user);
     }
 
     @Transactional

@@ -2,8 +2,8 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.CreateTimeEntryRequest;
 import com.timegrid.dto.RejectTimeEntryRequest;
-import com.timegrid.dto.UpdateTimeEntryRequest;
 import com.timegrid.dto.TimeEntryResponse;
+import com.timegrid.dto.UpdateTimeEntryRequest;
 import com.timegrid.entity.TimeEntry;
 import com.timegrid.service.TimeEntryService;
 import jakarta.validation.Valid;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,12 +40,13 @@ public class TimeEntryController {
                 .toList();
     }
 
-	@GetMapping("/pending")
-	public List<TimeEntryResponse> pending(@RequestParam(required = false) UUID teamId) {
-		return timeEntryService.findPending(teamId).stream()
-				.map(TimeEntryResponse::from)
-				.toList();
-	}
+    @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('time_entry:approve')")
+    public List<TimeEntryResponse> pending(@RequestParam(required = false) UUID teamId) {
+        return timeEntryService.findPending(teamId).stream()
+                .map(TimeEntryResponse::from)
+                .toList();
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -82,12 +84,15 @@ public class TimeEntryController {
     }
 
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('time_entry:approve')")
     public TimeEntryResponse approve(@PathVariable UUID id) {
         return TimeEntryResponse.from(timeEntryService.approve(id));
     }
 
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAuthority('time_entry:approve')")
     public TimeEntryResponse reject(@PathVariable UUID id, @Valid @RequestBody RejectTimeEntryRequest request) {
         return TimeEntryResponse.from(timeEntryService.reject(id, request.reason()));
     }
+
 }

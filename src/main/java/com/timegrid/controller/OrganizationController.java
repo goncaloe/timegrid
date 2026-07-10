@@ -62,4 +62,5 @@ public class OrganizationController {
     public OrganizationResponse restore(@PathVariable UUID id) {
         return OrganizationResponse.from(organizationService.restore(id));
     }
+
 }

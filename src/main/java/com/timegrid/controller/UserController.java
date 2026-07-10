@@ -2,6 +2,7 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.dto.PageResponse;
+import com.timegrid.dto.UpdateUserRolesRequest;
 import com.timegrid.dto.UserResponse;
 import com.timegrid.service.UserService;
 import jakarta.validation.Valid;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,11 +34,13 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('user:write')")
     public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
         return UserResponse.from(userService.create(request));
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('user:read')")
     public PageResponse<UserResponse> findAll(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -45,17 +49,26 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('user:read')")
     public UserResponse findById(@PathVariable UUID id) {
         return UserResponse.from(userService.findById(id));
     }
 
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasAuthority('user:write')")
+    public UserResponse updateRoles(@PathVariable UUID id, @Valid @RequestBody UpdateUserRolesRequest request) {
+        return UserResponse.from(userService.updateRoles(id, request.roles()));
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAuthority('user:write')")
     public void delete(@PathVariable UUID id) {
         userService.delete(id);
     }
 
     @PostMapping("/{id}/restore")
+    @PreAuthorize("hasAuthority('user:write')")
     public UserResponse restore(@PathVariable UUID id) {
         return UserResponse.from(userService.restore(id));
     }

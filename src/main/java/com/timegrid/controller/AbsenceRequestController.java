@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,8 @@ public class AbsenceRequestController {
                 .toList();
     }
 
+    @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('absence:approve')")
     public List<AbsenceRequestResponse> pending(@RequestParam(required = false) UUID teamId) {
         return absenceRequestService.findPending(teamId).stream()
                 .map(AbsenceRequestResponse::from)
@@ -80,11 +83,13 @@ public class AbsenceRequestController {
     }
 
     @PostMapping("/{id}/approve")
+    @PreAuthorize("hasAuthority('absence:approve')")
     public AbsenceRequestResponse approve(@PathVariable UUID id) {
         return AbsenceRequestResponse.from(absenceRequestService.approve(id));
     }
 
     @PostMapping("/{id}/reject")
+    @PreAuthorize("hasAuthority('absence:approve')")
     public AbsenceRequestResponse reject(@PathVariable UUID id,
             @Valid @RequestBody RejectAbsenceRequestRequest request) {
         return AbsenceRequestResponse.from(absenceRequestService.reject(id, request.reason()));
