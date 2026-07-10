@@ -107,7 +107,7 @@ class TimeEntryServiceTest {
         when(timeEntryRepository.save(any(TimeEntry.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         TimeEntry created = timeEntryService.create(
-                workDate, LocalTime.of(9, 0), LocalTime.of(18, 0), 60, TimeEntryType.REMOTE, "trabalho remoto");
+                workDate, LocalTime.of(9, 0), LocalTime.of(18, 0), 60, TimeEntryType.REMOTE, "remote work");
 
         assertThat(created.getStatus()).isEqualTo(TimeEntryStatus.DRAFT);
         assertThat(created.getOrganization()).isEqualTo(user.getOrganization());
@@ -246,8 +246,8 @@ class TimeEntryServiceTest {
         when(currentUser.organizationId()).thenReturn(organizationId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
-        doThrow(new ForbiddenException("You cannot approve or reject your own entries."))
-                .when(approvalPolicy).checkNotOwnRequest(userId, "You cannot approve or reject your own entries.");
+        doThrow(new ForbiddenException("time-entry.approve-self"))
+                .when(approvalPolicy).checkNotOwnRequest(userId, "time-entry.approve-self");
 
         assertThatThrownBy(() -> timeEntryService.approve(id))
                 .isInstanceOf(ForbiddenException.class);
@@ -301,8 +301,8 @@ class TimeEntryServiceTest {
         when(currentUser.organizationId()).thenReturn(organizationId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
-        doThrow(new ForbiddenException("You cannot approve or reject your own entries."))
-                .when(approvalPolicy).checkNotOwnRequest(userId, "You cannot approve or reject your own entries.");
+        doThrow(new ForbiddenException("time-entry.approve-self"))
+                .when(approvalPolicy).checkNotOwnRequest(userId, "time-entry.approve-self");
 
         assertThatThrownBy(() -> timeEntryService.reject(id, "reason"))
                 .isInstanceOf(ForbiddenException.class);

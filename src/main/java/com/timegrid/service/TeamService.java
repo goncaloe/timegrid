@@ -50,7 +50,7 @@ public class TeamService {
     @Transactional
     public Team update(UUID id, UpdateTeamRequest request) {
         Team team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("user.not-found", id));
+                .orElseThrow(() -> new NotFoundException("team.not-found", id));
 
         if (teamRepository.existsByOrganizationIdAndNameAndDeletedAtIsNullAndIdNot(
                 team.getOrganization().getId(), request.name(), id)) {

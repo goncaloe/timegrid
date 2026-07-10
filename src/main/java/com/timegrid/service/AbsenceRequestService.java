@@ -112,7 +112,7 @@ public class AbsenceRequestService {
     @Transactional
     public AbsenceRequest restore(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserId(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
         request.setDeletedAt(null);
         return absenceRequestRepository.save(request);
     }
@@ -120,12 +120,12 @@ public class AbsenceRequestService {
     @Transactional
     public AbsenceRequest cancel(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
         if (request.getStatus() != AbsenceStatus.SUBMITTED && request.getStatus() != AbsenceStatus.APPROVED) {
-            throw new BusinessRuleException("Only submitted or approved requests can be cancelled.");
+            throw new BusinessRuleException("absence.not-cancellable");
         }
         if (!request.getStartDate().isAfter(LocalDate.now())) {
-            throw new BusinessRuleException("This request can only be cancelled before it starts.");
+            throw new BusinessRuleException("absence.cancel-too-late");
         }
         request.setStatus(AbsenceStatus.CANCELLED);
         return absenceRequestRepository.save(request);
@@ -134,26 +134,26 @@ public class AbsenceRequestService {
     private AbsenceRequest findSubmitted(UUID id) {
         AbsenceRequest request = absenceRequestRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
         if (request.getStatus() != AbsenceStatus.SUBMITTED) {
-            throw new BusinessRuleException("This request is not submitted for approval.");
+            throw new BusinessRuleException("absence.not-submitted");
         }
-        approvalPolicy.checkNotOwnRequest(request.getUser().getId(), "You cannot approve or reject your own requests.");
+        approvalPolicy.checkNotOwnRequest(request.getUser().getId(), "absence.approve-self");
         return request;
     }
 
     private AbsenceRequest findEditable(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("Absence request not found.", id));
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
         if (request.getStatus() != AbsenceStatus.DRAFT && request.getStatus() != AbsenceStatus.REJECTED) {
-            throw new BusinessRuleException("Only draft or rejected requests can be edited, deleted or submitted.");
+            throw new BusinessRuleException("absence.not-editable");
         }
         return request;
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {
         if (endDate.isBefore(startDate)) {
-            throw new BusinessRuleException("The end date must not be before the start date.");
+            throw new BusinessRuleException("absence.invalid-dates");
         }
     }
 
@@ -166,7 +166,7 @@ public class AbsenceRequestService {
                 .anyMatch(existing -> !existing.getEndDate().isBefore(startDate)
                         && !existing.getStartDate().isAfter(endDate));
         if (overlaps) {
-            throw new BusinessRuleException("There is already an absence request overlapping this period.");
+            throw new BusinessRuleException("absence.overlap");
         }
     }
 

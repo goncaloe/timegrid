@@ -252,8 +252,8 @@ class AbsenceRequestServiceTest {
         when(currentUser.organizationId()).thenReturn(organizationId);
         when(absenceRequestRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(request));
-        doThrow(new ForbiddenException("You cannot approve or reject your own requests."))
-                .when(approvalPolicy).checkNotOwnRequest(userId, "You cannot approve or reject your own requests.");
+        doThrow(new ForbiddenException("absence.approve-self"))
+                .when(approvalPolicy).checkNotOwnRequest(userId, "absence.approve-self");
 
         assertThatThrownBy(() -> absenceRequestService.approve(id))
                 .isInstanceOf(ForbiddenException.class);

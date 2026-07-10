@@ -93,7 +93,7 @@ public class TimeEntryService {
     @Transactional
     public TimeEntry restore(UUID id) {
         TimeEntry entry = timeEntryRepository.findByIdAndUserId(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
         entry.setDeletedAt(null);
         return timeEntryRepository.save(entry);
     }
@@ -129,30 +129,30 @@ public class TimeEntryService {
     private TimeEntry findSubmitted(UUID id) {
         TimeEntry entry = timeEntryRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
-                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
         if (entry.getStatus() != TimeEntryStatus.SUBMITTED) {
-            throw new BusinessRuleException("The entry is not in submit status.");
+            throw new BusinessRuleException("time-entry.not-submitted");
         }
-        approvalPolicy.checkNotOwnRequest(entry.getUser().getId(), "You cannot approve or reject your own entries.");
+        approvalPolicy.checkNotOwnRequest(entry.getUser().getId(), "time-entry.approve-self");
         return entry;
     }
 
     private TimeEntry findEditable(UUID id) {
         TimeEntry entry = timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("Time entry not found.", id));
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
         if (entry.getStatus() != TimeEntryStatus.DRAFT && entry.getStatus() != TimeEntryStatus.REJECTED) {
-            throw new BusinessRuleException("Only draft or rejected entries can be edited, deleted or submitted.");
+            throw new BusinessRuleException("time-entry.not-editable");
         }
         return entry;
     }
 
     private void validateTimes(LocalTime startTime, LocalTime endTime, int breakMinutes) {
         if (!endTime.isAfter(startTime)) {
-            throw new BusinessRuleException("The end time must be after the start time.");
+            throw new BusinessRuleException("time-entry.invalid-times");
         }
         long duration = Duration.between(startTime, endTime).toMinutes();
         if (breakMinutes >= duration) {
-            throw new BusinessRuleException("The break must be shorter than the entry duration.");
+            throw new BusinessRuleException("time-entry.invalid-break");
         }
     }
 
@@ -162,7 +162,7 @@ public class TimeEntryService {
                 .anyMatch(existing -> existing.getStartTime().isBefore(endTime)
                         && existing.getEndTime().isAfter(startTime));
         if (overlaps) {
-            throw new BusinessRuleException("There is already an entry with an overlapping time range on this day.");
+            throw new BusinessRuleException("time-entry.overlap");
         }
     }
 

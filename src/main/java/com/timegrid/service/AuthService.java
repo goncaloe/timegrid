@@ -43,18 +43,18 @@ public class AuthService {
     @Transactional
     public RefreshResponse refresh(RefreshRequest request) {
         RefreshToken token = refreshTokenService.findByValue(request.refreshToken())
-                .orElseThrow(() -> new UnauthorizedException("The refresh token is invalid or has expired."));
+                .orElseThrow(() -> new UnauthorizedException("auth.refresh.invalid"));
 
         Instant now = Instant.now();
         if (token.isRevoked()) {
             // um token revogado só volta a aparecer aqui se alguém o copiou antes da rotação (ex.: roubado);
             // não há como saber se foi o dono ou o atacante que chegou primeiro, por isso corta todos desse utilizador
             refreshTokenService.revokeAllForUser(token.getUserId(), now);
-            throw new UnauthorizedException("This refresh token was already used. Please sign in again.");
+            throw new UnauthorizedException("auth.refresh.reused");
         }
         if (token.isExpired(now)) {
             refreshTokenService.revoke(token, now);
-            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+            throw new UnauthorizedException("auth.refresh.invalid");
         }
 
         AppUserDetails user = loadActive(token.getUserId());
@@ -78,20 +78,20 @@ public class AuthService {
         try {
             user = (AppUserDetails) userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            throw new UnauthorizedException("Invalid username or password.");
+            throw new UnauthorizedException("user.credentials.invalid");
         }
 
         if (user.isSoftDeleted()) {
-            throw new UnauthorizedException("This user account was deleted.");
+            throw new UnauthorizedException("user.deleted");
         }
         if (user.getStatus() == UserStatus.LOCKED) {
             throw new ForbiddenException("This user account is locked.");
         }
         if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new UnauthorizedException("This user account is inactive.");
+            throw new UnauthorizedException("user.inactive");
         }
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new UnauthorizedException("Invalid username or password.");
+            throw new UnauthorizedException("user.credentials.invalid");
         }
         return user;
     }
@@ -101,10 +101,10 @@ public class AuthService {
         try {
             user = (AppUserDetails) userDetailsService.loadUserById(userId);
         } catch (UsernameNotFoundException e) {
-            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+            throw new UnauthorizedException("auth.refresh.invalid");
         }
         if (user.isSoftDeleted() || user.getStatus() != UserStatus.ACTIVE) {
-            throw new UnauthorizedException("The refresh token is invalid or has expired.");
+            throw new UnauthorizedException("auth.refresh.invalid");
         }
         return user;
     }

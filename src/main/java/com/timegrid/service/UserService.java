@@ -87,7 +87,7 @@ public class UserService {
 
         Set<Role> roles = roleNames.stream()
                 .map(name -> roleRepository.findByName(name)
-                        .orElseThrow(() -> new NotFoundException("Role not found.", name)))
+                        .orElseThrow(() -> new NotFoundException("role.not-found", name)))
                 .collect(Collectors.toSet());
 
         user.setRoles(roles);
