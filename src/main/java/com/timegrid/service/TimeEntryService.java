@@ -29,6 +29,7 @@ public class TimeEntryService {
     private final CurrentUser currentUser;
     private final ApprovalPolicy approvalPolicy;
     private final WorkflowService workflowService;
+    private final StatusHistoryService statusHistoryService;
 
     @Transactional(readOnly = true)
     public List<TimeEntry> findOwn(LocalDate from, LocalDate to) {
@@ -61,7 +62,10 @@ public class TimeEntryService {
         entry.setNotes(notes);
         entry.setStatus(TimeEntryStatus.DRAFT);
 
-        return timeEntryRepository.save(entry);
+        TimeEntry saved = timeEntryRepository.save(entry);
+        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), null, TimeEntryStatus.DRAFT.name(),
+                null);
+        return saved;
     }
 
     @Transactional
@@ -104,33 +108,45 @@ public class TimeEntryService {
     public TimeEntry submit(UUID id) {
         TimeEntry entry = timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
                 .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
-        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
-                TimeEntryStatus.SUBMITTED.name(), currentUser.roles());
+        TimeEntryStatus from = entry.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, from.name(), TimeEntryStatus.SUBMITTED.name(),
+                currentUser.roles());
         entry.setStatus(TimeEntryStatus.SUBMITTED);
         entry.setRejectionReason(null);
-        return timeEntryRepository.save(entry);
+        TimeEntry saved = timeEntryRepository.save(entry);
+        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
+                TimeEntryStatus.SUBMITTED.name(), null);
+        return saved;
     }
 
     @Transactional
     public TimeEntry approve(UUID id) {
         TimeEntry entry = findForApproval(id);
-        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
-                TimeEntryStatus.APPROVED.name(), currentUser.roles());
+        TimeEntryStatus from = entry.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, from.name(), TimeEntryStatus.APPROVED.name(),
+                currentUser.roles());
         entry.setStatus(TimeEntryStatus.APPROVED);
         entry.setApprover(userRepository.getReferenceById(currentUser.userId()));
         entry.setApprovedAt(Instant.now());
         entry.setRejectionReason(null);
-        return timeEntryRepository.save(entry);
+        TimeEntry saved = timeEntryRepository.save(entry);
+        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
+                TimeEntryStatus.APPROVED.name(), null);
+        return saved;
     }
 
     @Transactional
     public TimeEntry reject(UUID id, String reason) {
         TimeEntry entry = findForApproval(id);
-        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
-                TimeEntryStatus.REJECTED.name(), currentUser.roles());
+        TimeEntryStatus from = entry.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, from.name(), TimeEntryStatus.REJECTED.name(),
+                currentUser.roles());
         entry.setStatus(TimeEntryStatus.REJECTED);
         entry.setRejectionReason(reason);
-        return timeEntryRepository.save(entry);
+        TimeEntry saved = timeEntryRepository.save(entry);
+        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
+                TimeEntryStatus.REJECTED.name(), reason);
+        return saved;
     }
 
     private TimeEntry findForApproval(UUID id) {

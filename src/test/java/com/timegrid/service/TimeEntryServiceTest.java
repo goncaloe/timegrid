@@ -13,6 +13,7 @@ import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import com.timegrid.service.ApprovalPolicy;
+import com.timegrid.service.StatusHistoryService;
 import com.timegrid.service.WorkflowService;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -49,6 +50,9 @@ class TimeEntryServiceTest {
 
     @Mock
     private WorkflowService workflowService;
+
+    @Mock
+    private StatusHistoryService statusHistoryService;
 
     @InjectMocks
     private TimeEntryService timeEntryService;
