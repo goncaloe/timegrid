@@ -27,6 +27,7 @@ public class AbsenceRequestService {
     private final CurrentUser currentUser;
     private final ApprovalPolicy approvalPolicy;
     private final WorkflowService workflowService;
+    private final StatusHistoryService statusHistoryService;
 
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findOwn(Integer year) {
@@ -57,40 +58,54 @@ public class AbsenceRequestService {
         request.setNotes(notes);
         request.setStatus(AbsenceStatus.DRAFT);
 
-        return absenceRequestRepository.save(request);
+        AbsenceRequest saved = absenceRequestRepository.save(request);
+        statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), null, AbsenceStatus.DRAFT.name(), null);
+        return saved;
     }
 
     @Transactional
     public AbsenceRequest submit(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
                 .orElseThrow(() -> new NotFoundException("absence.not-found", id));
-        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
-                AbsenceStatus.SUBMITTED.name(), currentUser.roles());
+        AbsenceStatus from = request.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, from.name(), AbsenceStatus.SUBMITTED.name(),
+                currentUser.roles());
         request.setStatus(AbsenceStatus.SUBMITTED);
         request.setRejectionReason(null);
-        return absenceRequestRepository.save(request);
+        AbsenceRequest saved = absenceRequestRepository.save(request);
+        statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
+                AbsenceStatus.SUBMITTED.name(), null);
+        return saved;
     }
 
     @Transactional
     public AbsenceRequest approve(UUID id) {
         AbsenceRequest request = findForApproval(id);
-        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
-                AbsenceStatus.APPROVED.name(), currentUser.roles());
+        AbsenceStatus from = request.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, from.name(), AbsenceStatus.APPROVED.name(),
+                currentUser.roles());
         request.setStatus(AbsenceStatus.APPROVED);
         request.setApprover(userRepository.getReferenceById(currentUser.userId()));
         request.setApprovedAt(Instant.now());
         request.setRejectionReason(null);
-        return absenceRequestRepository.save(request);
+        AbsenceRequest saved = absenceRequestRepository.save(request);
+        statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
+                AbsenceStatus.APPROVED.name(), null);
+        return saved;
     }
 
     @Transactional
     public AbsenceRequest reject(UUID id, String reason) {
         AbsenceRequest request = findForApproval(id);
-        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
-                AbsenceStatus.REJECTED.name(), currentUser.roles());
+        AbsenceStatus from = request.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, from.name(), AbsenceStatus.REJECTED.name(),
+                currentUser.roles());
         request.setStatus(AbsenceStatus.REJECTED);
         request.setRejectionReason(reason);
-        return absenceRequestRepository.save(request);
+        AbsenceRequest saved = absenceRequestRepository.save(request);
+        statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
+                AbsenceStatus.REJECTED.name(), reason);
+        return saved;
     }
 
     @Transactional
@@ -130,13 +145,17 @@ public class AbsenceRequestService {
     public AbsenceRequest cancel(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
                 .orElseThrow(() -> new NotFoundException("absence.not-found", id));
-        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
-                AbsenceStatus.CANCELLED.name(), currentUser.roles());
+        AbsenceStatus from = request.getStatus();
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, from.name(), AbsenceStatus.CANCELLED.name(),
+                currentUser.roles());
         if (!request.getStartDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("absence.cancel-too-late");
         }
         request.setStatus(AbsenceStatus.CANCELLED);
-        return absenceRequestRepository.save(request);
+        AbsenceRequest saved = absenceRequestRepository.save(request);
+        statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
+                AbsenceStatus.CANCELLED.name(), null);
+        return saved;
     }
 
     private AbsenceRequest findForApproval(UUID id) {

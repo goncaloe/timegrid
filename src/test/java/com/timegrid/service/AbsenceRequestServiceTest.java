@@ -13,6 +13,7 @@ import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import com.timegrid.service.ApprovalPolicy;
+import com.timegrid.service.StatusHistoryService;
 import com.timegrid.service.WorkflowService;
 import java.time.LocalDate;
 import java.util.List;
@@ -48,6 +49,9 @@ class AbsenceRequestServiceTest {
 
     @Mock
     private WorkflowService workflowService;
+
+    @Mock
+    private StatusHistoryService statusHistoryService;
 
     @InjectMocks
     private AbsenceRequestService absenceRequestService;
