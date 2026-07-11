@@ -1,6 +1,5 @@
 package com.timegrid.entity;
 
-import com.timegrid.entity.BaseEntity;
 import com.timegrid.enums.WorkflowEntityType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
