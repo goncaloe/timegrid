@@ -4,6 +4,7 @@ import com.timegrid.entity.TimeEntry;
 import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
+import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
@@ -27,6 +28,7 @@ public class TimeEntryService {
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
     private final ApprovalPolicy approvalPolicy;
+    private final WorkflowService workflowService;
 
     @Transactional(readOnly = true)
     public List<TimeEntry> findOwn(LocalDate from, LocalDate to) {
@@ -100,7 +102,10 @@ public class TimeEntryService {
 
     @Transactional
     public TimeEntry submit(UUID id) {
-        TimeEntry entry = findEditable(id);
+        TimeEntry entry = timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
+                TimeEntryStatus.SUBMITTED.name(), currentUser.roles());
         entry.setStatus(TimeEntryStatus.SUBMITTED);
         entry.setRejectionReason(null);
         return timeEntryRepository.save(entry);
@@ -108,7 +113,9 @@ public class TimeEntryService {
 
     @Transactional
     public TimeEntry approve(UUID id) {
-        TimeEntry entry = findSubmitted(id);
+        TimeEntry entry = findForApproval(id);
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
+                TimeEntryStatus.APPROVED.name(), currentUser.roles());
         entry.setStatus(TimeEntryStatus.APPROVED);
         entry.setApprover(userRepository.getReferenceById(currentUser.userId()));
         entry.setApprovedAt(Instant.now());
@@ -118,21 +125,18 @@ public class TimeEntryService {
 
     @Transactional
     public TimeEntry reject(UUID id, String reason) {
-        TimeEntry entry = findSubmitted(id);
+        TimeEntry entry = findForApproval(id);
+        workflowService.ensureAllowed(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
+                TimeEntryStatus.REJECTED.name(), currentUser.roles());
         entry.setStatus(TimeEntryStatus.REJECTED);
         entry.setRejectionReason(reason);
         return timeEntryRepository.save(entry);
     }
 
-    // TODO: os checks de aprovacao sao fixos aqui; passar para um motor de workflow
-    // quando existir implementacao
-    private TimeEntry findSubmitted(UUID id) {
+    private TimeEntry findForApproval(UUID id) {
         TimeEntry entry = timeEntryRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
-        if (entry.getStatus() != TimeEntryStatus.SUBMITTED) {
-            throw new BusinessRuleException("time-entry.not-submitted");
-        }
         approvalPolicy.checkNotOwnRequest(entry.getUser().getId(), "time-entry.approve-self");
         return entry;
     }

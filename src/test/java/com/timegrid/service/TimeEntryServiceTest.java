@@ -5,6 +5,7 @@ import com.timegrid.entity.TimeEntry;
 import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
+import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
@@ -12,6 +13,7 @@ import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import com.timegrid.service.ApprovalPolicy;
+import com.timegrid.service.WorkflowService;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +46,9 @@ class TimeEntryServiceTest {
 
     @Mock
     private ApprovalPolicy approvalPolicy;
+
+    @Mock
+    private WorkflowService workflowService;
 
     @InjectMocks
     private TimeEntryService timeEntryService;
@@ -205,6 +211,8 @@ class TimeEntryServiceTest {
 
         when(currentUser.userId()).thenReturn(userId);
         when(timeEntryRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(entry));
+        doThrow(new BusinessRuleException("workflow.transition-not-allowed"))
+                .when(workflowService).ensureAllowed(eq(WorkflowEntityType.TIME_ENTRY), any(), any(), any());
 
         assertThatThrownBy(() -> timeEntryService.submit(id))
                 .isInstanceOf(BusinessRuleException.class);
@@ -264,6 +272,8 @@ class TimeEntryServiceTest {
         when(currentUser.organizationId()).thenReturn(organizationId);
         when(timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(entry));
+        doThrow(new BusinessRuleException("workflow.transition-not-allowed"))
+                .when(workflowService).ensureAllowed(eq(WorkflowEntityType.TIME_ENTRY), any(), any(), any());
 
         assertThatThrownBy(() -> timeEntryService.approve(id))
                 .isInstanceOf(BusinessRuleException.class);
