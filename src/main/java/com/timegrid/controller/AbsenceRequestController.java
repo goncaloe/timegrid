@@ -2,8 +2,9 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.AbsenceRequestResponse;
 import com.timegrid.dto.CreateAbsenceRequestRequest;
-import com.timegrid.dto.UpdateAbsenceRequestRequest;
 import com.timegrid.dto.RejectAbsenceRequestRequest;
+import com.timegrid.dto.StatusChangeResponse;
+import com.timegrid.dto.UpdateAbsenceRequestRequest;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.service.AbsenceRequestService;
 import jakarta.validation.Valid;
@@ -34,6 +35,13 @@ public class AbsenceRequestController {
     public List<AbsenceRequestResponse> findOwn(@RequestParam(required = false) Integer year) {
         return absenceRequestService.findOwn(year).stream()
                 .map(AbsenceRequestResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}/history")
+    public List<StatusChangeResponse> history(@PathVariable UUID id) {
+        return absenceRequestService.history(id).stream()
+                .map(StatusChangeResponse::from)
                 .toList();
     }
 

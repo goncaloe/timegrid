@@ -1,11 +1,13 @@
 package com.timegrid.service;
 
+import com.timegrid.entity.StatusChange;
 import com.timegrid.entity.TimeEntry;
 import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
@@ -40,6 +42,18 @@ public class TimeEntryService {
     @Transactional(readOnly = true)
     public List<TimeEntry> findPending(UUID teamId) {
         return timeEntryRepository.findPending(currentUser.organizationId(), TimeEntryStatus.SUBMITTED, teamId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatusChange> history(UUID id) {
+        TimeEntry entry = timeEntryRepository
+                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
+        boolean isOwner = entry.getUser().getId().equals(currentUser.userId());
+        if (!isOwner && !currentUser.hasRole("MANAGER") && !currentUser.hasRole("ADMIN")) {
+            throw new ForbiddenException("time-entry.history-forbidden");
+        }
+        return statusHistoryService.findHistory(WorkflowEntityType.TIME_ENTRY, id);
     }
 
     @Transactional

@@ -2,6 +2,7 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.CreateTimeEntryRequest;
 import com.timegrid.dto.RejectTimeEntryRequest;
+import com.timegrid.dto.StatusChangeResponse;
 import com.timegrid.dto.TimeEntryResponse;
 import com.timegrid.dto.UpdateTimeEntryRequest;
 import com.timegrid.entity.TimeEntry;
@@ -37,6 +38,13 @@ public class TimeEntryController {
             @RequestParam LocalDate to) {
         return timeEntryService.findOwn(from, to).stream()
                 .map(TimeEntryResponse::from)
+                .toList();
+    }
+
+    @GetMapping("/{id}/history")
+    public List<StatusChangeResponse> history(@PathVariable UUID id) {
+        return timeEntryService.history(id).stream()
+                .map(StatusChangeResponse::from)
                 .toList();
     }
 

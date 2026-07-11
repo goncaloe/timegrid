@@ -1,11 +1,13 @@
 package com.timegrid.service;
 
 import com.timegrid.entity.AbsenceRequest;
+import com.timegrid.entity.StatusChange;
 import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
 import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
@@ -39,6 +41,18 @@ public class AbsenceRequestService {
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findPending(UUID teamId) {
         return absenceRequestRepository.findPending(currentUser.organizationId(), AbsenceStatus.SUBMITTED, teamId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatusChange> history(UUID id) {
+        AbsenceRequest request = absenceRequestRepository
+                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
+        boolean isOwner = request.getUser().getId().equals(currentUser.userId());
+        if (!isOwner && !currentUser.hasRole("MANAGER") && !currentUser.hasRole("ADMIN")) {
+            throw new ForbiddenException("absence.history-forbidden");
+        }
+        return statusHistoryService.findHistory(WorkflowEntityType.ABSENCE, id);
     }
 
     @Transactional
