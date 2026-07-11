@@ -1,0 +1,38 @@
+create table workflow_transitions (
+    id uuid primary key,
+    entity_type varchar(20) not null,
+    from_status varchar(20) not null,
+    to_status varchar(20) not null,
+    role varchar(20) not null,
+    created_at timestamp not null default now(),
+    updated_at timestamp not null default now(),
+    unique (entity_type, from_status, to_status, role)
+);
+
+insert into workflow_transitions (id, entity_type, from_status, to_status, role) values
+    (gen_random_uuid(), 'TIME_ENTRY', 'DRAFT', 'SUBMITTED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'DRAFT', 'SUBMITTED', 'MANAGER'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'DRAFT', 'SUBMITTED', 'ADMIN'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'REJECTED', 'SUBMITTED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'REJECTED', 'SUBMITTED', 'MANAGER'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'REJECTED', 'SUBMITTED', 'ADMIN'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'SUBMITTED', 'APPROVED', 'MANAGER'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'SUBMITTED', 'APPROVED', 'ADMIN'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'SUBMITTED', 'REJECTED', 'MANAGER'),
+    (gen_random_uuid(), 'TIME_ENTRY', 'SUBMITTED', 'REJECTED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'DRAFT', 'SUBMITTED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'ABSENCE', 'DRAFT', 'SUBMITTED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'DRAFT', 'SUBMITTED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'REJECTED', 'SUBMITTED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'ABSENCE', 'REJECTED', 'SUBMITTED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'REJECTED', 'SUBMITTED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'APPROVED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'APPROVED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'REJECTED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'REJECTED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'CANCELLED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'CANCELLED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'SUBMITTED', 'CANCELLED', 'ADMIN'),
+    (gen_random_uuid(), 'ABSENCE', 'APPROVED', 'CANCELLED', 'EMPLOYEE'),
+    (gen_random_uuid(), 'ABSENCE', 'APPROVED', 'CANCELLED', 'MANAGER'),
+    (gen_random_uuid(), 'ABSENCE', 'APPROVED', 'CANCELLED', 'ADMIN');
