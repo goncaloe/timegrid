@@ -4,6 +4,7 @@ import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
+import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.AbsenceRequestRepository;
@@ -25,6 +26,7 @@ public class AbsenceRequestService {
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
     private final ApprovalPolicy approvalPolicy;
+    private final WorkflowService workflowService;
 
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findOwn(Integer year) {
@@ -41,7 +43,7 @@ public class AbsenceRequestService {
     @Transactional
     public AbsenceRequest create(LocalDate startDate, LocalDate endDate, AbsenceType type, String notes) {
         User user = userRepository.findById(currentUser.userId())
-                .orElseThrow(() -> new NotFoundException("team.not-found", currentUser.userId()));
+                .orElseThrow(() -> new NotFoundException("user.not-found", currentUser.userId()));
 
         validateDates(startDate, endDate);
         checkOverlap(user.getId(), startDate, endDate, null);
@@ -60,7 +62,10 @@ public class AbsenceRequestService {
 
     @Transactional
     public AbsenceRequest submit(UUID id) {
-        AbsenceRequest request = findEditable(id);
+        AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
+                .orElseThrow(() -> new NotFoundException("absence.not-found", id));
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                AbsenceStatus.SUBMITTED.name(), currentUser.roles());
         request.setStatus(AbsenceStatus.SUBMITTED);
         request.setRejectionReason(null);
         return absenceRequestRepository.save(request);
@@ -68,7 +73,9 @@ public class AbsenceRequestService {
 
     @Transactional
     public AbsenceRequest approve(UUID id) {
-        AbsenceRequest request = findSubmitted(id);
+        AbsenceRequest request = findForApproval(id);
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                AbsenceStatus.APPROVED.name(), currentUser.roles());
         request.setStatus(AbsenceStatus.APPROVED);
         request.setApprover(userRepository.getReferenceById(currentUser.userId()));
         request.setApprovedAt(Instant.now());
@@ -78,7 +85,9 @@ public class AbsenceRequestService {
 
     @Transactional
     public AbsenceRequest reject(UUID id, String reason) {
-        AbsenceRequest request = findSubmitted(id);
+        AbsenceRequest request = findForApproval(id);
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                AbsenceStatus.REJECTED.name(), currentUser.roles());
         request.setStatus(AbsenceStatus.REJECTED);
         request.setRejectionReason(reason);
         return absenceRequestRepository.save(request);
@@ -121,9 +130,8 @@ public class AbsenceRequestService {
     public AbsenceRequest cancel(UUID id) {
         AbsenceRequest request = absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, currentUser.userId())
                 .orElseThrow(() -> new NotFoundException("absence.not-found", id));
-        if (request.getStatus() != AbsenceStatus.SUBMITTED && request.getStatus() != AbsenceStatus.APPROVED) {
-            throw new BusinessRuleException("absence.not-cancellable");
-        }
+        workflowService.ensureAllowed(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                AbsenceStatus.CANCELLED.name(), currentUser.roles());
         if (!request.getStartDate().isAfter(LocalDate.now())) {
             throw new BusinessRuleException("absence.cancel-too-late");
         }
@@ -131,13 +139,10 @@ public class AbsenceRequestService {
         return absenceRequestRepository.save(request);
     }
 
-    private AbsenceRequest findSubmitted(UUID id) {
+    private AbsenceRequest findForApproval(UUID id) {
         AbsenceRequest request = absenceRequestRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("absence.not-found", id));
-        if (request.getStatus() != AbsenceStatus.SUBMITTED) {
-            throw new BusinessRuleException("absence.not-submitted");
-        }
         approvalPolicy.checkNotOwnRequest(request.getUser().getId(), "absence.approve-self");
         return request;
     }

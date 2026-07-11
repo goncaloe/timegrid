@@ -5,6 +5,7 @@ import com.timegrid.entity.Organization;
 import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
+import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
@@ -12,6 +13,7 @@ import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import com.timegrid.service.ApprovalPolicy;
+import com.timegrid.service.WorkflowService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -42,6 +45,9 @@ class AbsenceRequestServiceTest {
 
     @Mock
     private ApprovalPolicy approvalPolicy;
+
+    @Mock
+    private WorkflowService workflowService;
 
     @InjectMocks
     private AbsenceRequestService absenceRequestService;
@@ -210,6 +216,8 @@ class AbsenceRequestServiceTest {
 
         when(currentUser.userId()).thenReturn(userId);
         when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+        doThrow(new BusinessRuleException("workflow.transition-not-allowed"))
+                .when(workflowService).ensureAllowed(eq(WorkflowEntityType.ABSENCE), any(), any(), any());
 
         assertThatThrownBy(() -> absenceRequestService.submit(id))
                 .isInstanceOf(BusinessRuleException.class);
@@ -270,6 +278,8 @@ class AbsenceRequestServiceTest {
         when(currentUser.organizationId()).thenReturn(organizationId);
         when(absenceRequestRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
                 .thenReturn(Optional.of(request));
+        doThrow(new BusinessRuleException("workflow.transition-not-allowed"))
+                .when(workflowService).ensureAllowed(eq(WorkflowEntityType.ABSENCE), any(), any(), any());
 
         assertThatThrownBy(() -> absenceRequestService.approve(id))
                 .isInstanceOf(BusinessRuleException.class);
@@ -339,6 +349,8 @@ class AbsenceRequestServiceTest {
 
         when(currentUser.userId()).thenReturn(userId);
         when(absenceRequestRepository.findByIdAndUserIdAndDeletedAtIsNull(id, userId)).thenReturn(Optional.of(request));
+        doThrow(new BusinessRuleException("workflow.transition-not-allowed"))
+                .when(workflowService).ensureAllowed(eq(WorkflowEntityType.ABSENCE), any(), any(), any());
 
         assertThatThrownBy(() -> absenceRequestService.cancel(id))
                 .isInstanceOf(BusinessRuleException.class);
