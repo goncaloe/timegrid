@@ -45,6 +45,12 @@ public class TimeEntryService {
     }
 
     @Transactional(readOnly = true)
+    public List<String> allowedActions(TimeEntry entry) {
+        return workflowService.allowedTargets(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
+                currentUser.roles());
+    }
+
+    @Transactional(readOnly = true)
     public List<StatusChange> history(UUID id) {
         TimeEntry entry = timeEntryRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())

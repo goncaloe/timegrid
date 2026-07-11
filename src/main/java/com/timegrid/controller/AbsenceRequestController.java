@@ -34,7 +34,7 @@ public class AbsenceRequestController {
     @GetMapping
     public List<AbsenceRequestResponse> findOwn(@RequestParam(required = false) Integer year) {
         return absenceRequestService.findOwn(year).stream()
-                .map(AbsenceRequestResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -49,7 +49,7 @@ public class AbsenceRequestController {
     @PreAuthorize("hasAuthority('absence:approve')")
     public List<AbsenceRequestResponse> pending(@RequestParam(required = false) UUID teamId) {
         return absenceRequestService.findPending(teamId).stream()
-                .map(AbsenceRequestResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -58,7 +58,7 @@ public class AbsenceRequestController {
     public AbsenceRequestResponse create(@Valid @RequestBody CreateAbsenceRequestRequest request) {
         AbsenceRequest absenceRequest = absenceRequestService.create(
                 request.startDate(), request.endDate(), request.type(), request.notes());
-        return AbsenceRequestResponse.from(absenceRequest);
+        return toResponse(absenceRequest);
     }
 
     @PutMapping("/{id}")
@@ -66,7 +66,7 @@ public class AbsenceRequestController {
             @Valid @RequestBody UpdateAbsenceRequestRequest request) {
         AbsenceRequest absenceRequest = absenceRequestService.update(
                 id, request.startDate(), request.endDate(), request.type(), request.notes());
-        return AbsenceRequestResponse.from(absenceRequest);
+        return toResponse(absenceRequest);
     }
 
     @DeleteMapping("/{id}")
@@ -77,30 +77,34 @@ public class AbsenceRequestController {
 
     @PostMapping("/{id}/restore")
     public AbsenceRequestResponse restore(@PathVariable UUID id) {
-        return AbsenceRequestResponse.from(absenceRequestService.restore(id));
+        return toResponse(absenceRequestService.restore(id));
     }
 
     @PostMapping("/{id}/submit")
     public AbsenceRequestResponse submit(@PathVariable UUID id) {
-        return AbsenceRequestResponse.from(absenceRequestService.submit(id));
+        return toResponse(absenceRequestService.submit(id));
     }
 
     @PostMapping("/{id}/cancel")
     public AbsenceRequestResponse cancel(@PathVariable UUID id) {
-        return AbsenceRequestResponse.from(absenceRequestService.cancel(id));
+        return toResponse(absenceRequestService.cancel(id));
     }
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('absence:approve')")
     public AbsenceRequestResponse approve(@PathVariable UUID id) {
-        return AbsenceRequestResponse.from(absenceRequestService.approve(id));
+        return toResponse(absenceRequestService.approve(id));
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('absence:approve')")
     public AbsenceRequestResponse reject(@PathVariable UUID id,
             @Valid @RequestBody RejectAbsenceRequestRequest request) {
-        return AbsenceRequestResponse.from(absenceRequestService.reject(id, request.reason()));
+        return toResponse(absenceRequestService.reject(id, request.reason()));
+    }
+
+    private AbsenceRequestResponse toResponse(AbsenceRequest request) {
+        return AbsenceRequestResponse.from(request, absenceRequestService.allowedActions(request));
     }
 
 }

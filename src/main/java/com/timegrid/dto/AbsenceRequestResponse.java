@@ -6,6 +6,7 @@ import com.timegrid.enums.AbsenceType;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 public record AbsenceRequestResponse(
@@ -21,9 +22,10 @@ public record AbsenceRequestResponse(
         String rejectionReason,
         UUID approverId,
         Instant approvedAt,
-        Instant createdAt) {
+        Instant createdAt,
+        List<String> allowedActions) {
 
-    public static AbsenceRequestResponse from(AbsenceRequest request) {
+    public static AbsenceRequestResponse from(AbsenceRequest request, List<String> allowedActions) {
         return new AbsenceRequestResponse(
                 request.getId(),
                 request.getUser().getId(),
@@ -37,7 +39,8 @@ public record AbsenceRequestResponse(
                 request.getRejectionReason(),
                 request.getApprover() != null ? request.getApprover().getId() : null,
                 request.getApprovedAt(),
-                request.getCreatedAt());
+                request.getCreatedAt(),
+                allowedActions);
     }
 
     private static long workingDays(LocalDate startDate, LocalDate endDate) {

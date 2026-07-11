@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 public record TimeEntryResponse(
@@ -24,9 +25,10 @@ public record TimeEntryResponse(
         String rejectionReason,
         UUID approverId,
         Instant approvedAt,
-        Instant createdAt) {
+        Instant createdAt,
+        List<String> allowedActions) {
 
-    public static TimeEntryResponse from(TimeEntry entry) {
+    public static TimeEntryResponse from(TimeEntry entry, List<String> allowedActions) {
         long durationMinutes = Duration.between(entry.getStartTime(), entry.getEndTime()).toMinutes()
                 - entry.getBreakMinutes();
 
@@ -45,7 +47,8 @@ public record TimeEntryResponse(
                 entry.getRejectionReason(),
                 entry.getApprover() != null ? entry.getApprover().getId() : null,
                 entry.getApprovedAt(),
-                entry.getCreatedAt());
+                entry.getCreatedAt(),
+                allowedActions);
     }
 
 }

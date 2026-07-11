@@ -37,7 +37,7 @@ public class TimeEntryController {
             @RequestParam LocalDate from,
             @RequestParam LocalDate to) {
         return timeEntryService.findOwn(from, to).stream()
-                .map(TimeEntryResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -52,7 +52,7 @@ public class TimeEntryController {
     @PreAuthorize("hasAuthority('time_entry:approve')")
     public List<TimeEntryResponse> pending(@RequestParam(required = false) UUID teamId) {
         return timeEntryService.findPending(teamId).stream()
-                .map(TimeEntryResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -63,7 +63,7 @@ public class TimeEntryController {
         TimeEntry entry = timeEntryService.create(
                 request.workDate(), request.startTime(), request.endTime(), breakMinutes,
                 request.type(), request.notes());
-        return TimeEntryResponse.from(entry);
+        return toResponse(entry);
     }
 
     @PutMapping("/{id}")
@@ -72,7 +72,7 @@ public class TimeEntryController {
         TimeEntry entry = timeEntryService.update(id,
                 request.workDate(), request.startTime(), request.endTime(), breakMinutes,
                 request.type(), request.notes());
-        return TimeEntryResponse.from(entry);
+        return toResponse(entry);
     }
 
     @DeleteMapping("/{id}")
@@ -83,24 +83,28 @@ public class TimeEntryController {
 
     @PostMapping("/{id}/restore")
     public TimeEntryResponse restore(@PathVariable UUID id) {
-        return TimeEntryResponse.from(timeEntryService.restore(id));
+        return toResponse(timeEntryService.restore(id));
     }
 
     @PostMapping("/{id}/submit")
     public TimeEntryResponse submit(@PathVariable UUID id) {
-        return TimeEntryResponse.from(timeEntryService.submit(id));
+        return toResponse(timeEntryService.submit(id));
     }
 
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasAuthority('time_entry:approve')")
     public TimeEntryResponse approve(@PathVariable UUID id) {
-        return TimeEntryResponse.from(timeEntryService.approve(id));
+        return toResponse(timeEntryService.approve(id));
     }
 
     @PostMapping("/{id}/reject")
     @PreAuthorize("hasAuthority('time_entry:approve')")
     public TimeEntryResponse reject(@PathVariable UUID id, @Valid @RequestBody RejectTimeEntryRequest request) {
-        return TimeEntryResponse.from(timeEntryService.reject(id, request.reason()));
+        return toResponse(timeEntryService.reject(id, request.reason()));
+    }
+
+    private TimeEntryResponse toResponse(TimeEntry entry) {
+        return TimeEntryResponse.from(entry, timeEntryService.allowedActions(entry));
     }
 
 }

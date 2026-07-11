@@ -44,6 +44,12 @@ public class AbsenceRequestService {
     }
 
     @Transactional(readOnly = true)
+    public List<String> allowedActions(AbsenceRequest request) {
+        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                currentUser.roles());
+    }
+
+    @Transactional(readOnly = true)
     public List<StatusChange> history(UUID id) {
         AbsenceRequest request = absenceRequestRepository
                 .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
