@@ -58,6 +58,13 @@ class WorkflowServiceTest {
     }
 
     @Test
+    void createRejectsUnknownStatus() {
+        assertThatThrownBy(
+                () -> workflowService.create(WorkflowEntityType.TIME_ENTRY, "SUBMITED", "APPROVED", "MANAGER"))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
     void createRejectsDuplicateTransition() {
         when(workflowTransitionRepository.existsByEntityTypeAndFromStatusAndToStatusAndRole(
                 WorkflowEntityType.TIME_ENTRY, "DRAFT", "SUBMITTED", "EMPLOYEE"))

@@ -1,11 +1,14 @@
 package com.timegrid.service;
 
 import com.timegrid.entity.WorkflowTransition;
+import com.timegrid.enums.AbsenceStatus;
+import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.WorkflowEntityType;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.WorkflowTransitionRepository;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +42,8 @@ public class WorkflowService {
 
     @Transactional
     public WorkflowTransition create(WorkflowEntityType entityType, String fromStatus, String toStatus, String role) {
+        validateStatus(entityType, fromStatus);
+        validateStatus(entityType, toStatus);
         if (workflowTransitionRepository.existsByEntityTypeAndFromStatusAndToStatusAndRole(
                 entityType, fromStatus, toStatus, role)) {
             throw new ConflictException("workflow.transition-exists");
@@ -49,6 +54,16 @@ public class WorkflowService {
         transition.setToStatus(toStatus);
         transition.setRole(role);
         return workflowTransitionRepository.save(transition);
+    }
+
+    private void validateStatus(WorkflowEntityType entityType, String status) {
+        boolean valid = switch (entityType) {
+            case TIME_ENTRY -> Arrays.stream(TimeEntryStatus.values()).anyMatch(s -> s.name().equals(status));
+            case ABSENCE -> Arrays.stream(AbsenceStatus.values()).anyMatch(s -> s.name().equals(status));
+        };
+        if (!valid) {
+            throw new BusinessRuleException("workflow.invalid-status", status);
+        }
     }
 
     @Transactional
