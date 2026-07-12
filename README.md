@@ -148,3 +148,13 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - Preferir proteções por permissão nos métodos de controllers com `@PreAuthorize` e não por role. Desta forma, as regras do que cada perfil pode fazer fica numa tabela da bd, em vez de espalhado no código. Dar uma permissão nova é uma migração, sem mexer no java.
 - Tradução i18n das mensagens de erro, com deteção do Locale do utilizador conforme o `Accept-Language`. Usar `Locale.ENGLISH` como fallback.
 - Centralizar regras de negócio repetidas numa classe comum `ApprovalPolicy`: princípio DRY.
+
+### 12 Julho
+
+- Implementar máquina de estados dos registos/ausências. Define as regras de quem pode mudar os estados. Usar uma tabela na bd `workflow_transitions` configurável com as regras de quem pode mudar os estados. Regras de transição do estado são definidas por organização ou por tipo de entidade, e podem mudar com o tempo. Com esta implementação evita-se escrever ifs no código.
+- `WorkflowService` não consegue incluir todas as regras de transição de estado. Checks como "é o próprio dono" ou "está num estado editável" não são transições.
+- Usar `@Cacheable` em consultas `workflow_transitions` para cache simples em memória por conter definições que quase nunca mudam. Guarda cache em cada instância Tomcat, mas já evita dezenas de consultas à bd para um uso típico. Invalidar cache ao modificar definições na tabela.
+- Guardar histórico de alterações de estado numa tabela `status_changes`. Para uma aplicação deste tipo é importante ter um histórico com a linha do tempo de cada registo/ausência com informação relevante como: qual os estados que transitou, quem alterou e quando.
+- implementar log de eventos na tabela `log_events`. Ao contrário do histórico, a ideia é registar operações não críticas na aplicação. Usar `ApplicationEventPublisher` e `@TransactionalEventListener` do spring para registar eventos. A ideia é que o service não precisa saber quais os listners estão ativos, e assim acrescentar listners novos é transparente. Usar transação própria com `REQUIRES_NEW` por não ser uma operação crítica. É uma versão mais simples do que implementei noutros projetos.
+- Endpoint `GET /api/log-events` com paginação e filtros opcionais
+- Usar `getRemoteAddr()` e não `X-Forwarded-For` porque pode ser forjado. Em produção `server.forward-headers-strategy: native` faz com que o Tomcat confie nesse cabeçalho só quando vem do proxy.
