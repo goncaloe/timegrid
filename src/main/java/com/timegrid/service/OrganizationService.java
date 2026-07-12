@@ -1,12 +1,5 @@
 package com.timegrid.service;
 
-import java.time.DateTimeException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.UUID;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import com.timegrid.dto.CreateOrganizationRequest;
 import com.timegrid.dto.UpdateOrganizationRequest;
 import com.timegrid.entity.Organization;
@@ -16,7 +9,13 @@ import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.security.CurrentUser;
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
