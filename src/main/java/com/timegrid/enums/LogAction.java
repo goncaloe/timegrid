@@ -1,0 +1,13 @@
+package com.timegrid.enums;
+
+public enum LogAction {
+    LOGIN_SUCCESS,
+    LOGIN_FAILED,
+    LOGOUT,
+    USER_CREATED,
+    USER_DELETED,
+    ROLES_CHANGED,
+    TIME_ENTRY_STATUS_CHANGED,
+    ABSENCE_STATUS_CHANGED,
+    EXPORT_GENERATED
+}
