@@ -6,6 +6,7 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.enums.WorkflowEntityType;
+import com.timegrid.event.TimeEntryStatusChanged;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
@@ -19,6 +20,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ public class TimeEntryService {
     private final ApprovalPolicy approvalPolicy;
     private final WorkflowService workflowService;
     private final StatusHistoryService statusHistoryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<TimeEntry> findOwn(LocalDate from, LocalDate to) {
@@ -46,14 +49,12 @@ public class TimeEntryService {
 
     @Transactional(readOnly = true)
     public List<String> allowedActions(TimeEntry entry) {
-        return workflowService.allowedTargets(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
-                currentUser.roles());
+        return workflowService.allowedTargets(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(), currentUser.roles());
     }
 
     @Transactional(readOnly = true)
     public List<StatusChange> history(UUID id) {
-        TimeEntry entry = timeEntryRepository
-                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+        TimeEntry entry = timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
         boolean isOwner = entry.getUser().getId().equals(currentUser.userId());
         if (!isOwner && !currentUser.hasRole("MANAGER") && !currentUser.hasRole("ADMIN")) {
@@ -83,8 +84,7 @@ public class TimeEntryService {
         entry.setStatus(TimeEntryStatus.DRAFT);
 
         TimeEntry saved = timeEntryRepository.save(entry);
-        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), null, TimeEntryStatus.DRAFT.name(),
-                null);
+        statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), null, TimeEntryStatus.DRAFT.name(), null);
         return saved;
     }
 
@@ -136,6 +136,7 @@ public class TimeEntryService {
         TimeEntry saved = timeEntryRepository.save(entry);
         statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
                 TimeEntryStatus.SUBMITTED.name(), null);
+        publishStatusChange(saved, from, null);
         return saved;
     }
 
@@ -152,6 +153,7 @@ public class TimeEntryService {
         TimeEntry saved = timeEntryRepository.save(entry);
         statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
                 TimeEntryStatus.APPROVED.name(), null);
+        publishStatusChange(saved, from, null);
         return saved;
     }
 
@@ -166,12 +168,17 @@ public class TimeEntryService {
         TimeEntry saved = timeEntryRepository.save(entry);
         statusHistoryService.record(WorkflowEntityType.TIME_ENTRY, saved.getId(), from.name(),
                 TimeEntryStatus.REJECTED.name(), reason);
+        publishStatusChange(saved, from, reason);
         return saved;
     }
 
+    private void publishStatusChange(TimeEntry entry, TimeEntryStatus from, String comment) {
+        eventPublisher.publishEvent(new TimeEntryStatusChanged(entry.getId(), currentUser.organizationId(),
+                entry.getUser().getId(), currentUser.userId(), from, entry.getStatus(), comment));
+    }
+
     private TimeEntry findForApproval(UUID id) {
-        TimeEntry entry = timeEntryRepository
-                .findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
+        TimeEntry entry = timeEntryRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("time-entry.not-found", id));
         approvalPolicy.checkNotOwnRequest(entry.getUser().getId(), "time-entry.approve-self");
         return entry;
@@ -199,8 +206,7 @@ public class TimeEntryService {
     private void checkOverlap(UUID userId, LocalDate workDate, LocalTime startTime, LocalTime endTime, UUID excludeId) {
         boolean overlaps = timeEntryRepository.findByUserIdAndWorkDateAndDeletedAtIsNull(userId, workDate).stream()
                 .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))
-                .anyMatch(existing -> existing.getStartTime().isBefore(endTime)
-                        && existing.getEndTime().isAfter(startTime));
+                .anyMatch(existing -> existing.getStartTime().isBefore(endTime) && existing.getEndTime().isAfter(startTime));
         if (overlaps) {
             throw new BusinessRuleException("time-entry.overlap");
         }

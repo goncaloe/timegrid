@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,6 +53,9 @@ class AbsenceRequestServiceTest {
 
     @Mock
     private StatusHistoryService statusHistoryService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AbsenceRequestService absenceRequestService;
@@ -199,6 +203,7 @@ class AbsenceRequestServiceTest {
         UUID userId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
         AbsenceRequest request = new AbsenceRequest();
+        request.setUser(userWithId(userId));
         request.setStatus(AbsenceStatus.DRAFT);
 
         when(currentUser.userId()).thenReturn(userId);
@@ -315,6 +320,7 @@ class AbsenceRequestServiceTest {
         UUID userId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
         AbsenceRequest request = new AbsenceRequest();
+        request.setUser(userWithId(userId));
         request.setStatus(AbsenceStatus.APPROVED);
         request.setStartDate(LocalDate.now().plusDays(5));
 

@@ -6,6 +6,7 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
 import com.timegrid.enums.WorkflowEntityType;
+import com.timegrid.event.AbsenceStatusChanged;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ public class AbsenceRequestService {
     private final ApprovalPolicy approvalPolicy;
     private final WorkflowService workflowService;
     private final StatusHistoryService statusHistoryService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findOwn(Integer year) {
@@ -45,8 +48,7 @@ public class AbsenceRequestService {
 
     @Transactional(readOnly = true)
     public List<String> allowedActions(AbsenceRequest request) {
-        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(),
-                currentUser.roles());
+        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(), currentUser.roles());
     }
 
     @Transactional(readOnly = true)
@@ -95,6 +97,7 @@ public class AbsenceRequestService {
         AbsenceRequest saved = absenceRequestRepository.save(request);
         statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
                 AbsenceStatus.SUBMITTED.name(), null);
+        publishStatusChange(saved, from, null);
         return saved;
     }
 
@@ -111,6 +114,7 @@ public class AbsenceRequestService {
         AbsenceRequest saved = absenceRequestRepository.save(request);
         statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
                 AbsenceStatus.APPROVED.name(), null);
+        publishStatusChange(saved, from, null);
         return saved;
     }
 
@@ -125,6 +129,7 @@ public class AbsenceRequestService {
         AbsenceRequest saved = absenceRequestRepository.save(request);
         statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
                 AbsenceStatus.REJECTED.name(), reason);
+        publishStatusChange(saved, from, reason);
         return saved;
     }
 
@@ -175,7 +180,13 @@ public class AbsenceRequestService {
         AbsenceRequest saved = absenceRequestRepository.save(request);
         statusHistoryService.record(WorkflowEntityType.ABSENCE, saved.getId(), from.name(),
                 AbsenceStatus.CANCELLED.name(), null);
+        publishStatusChange(saved, from, null);
         return saved;
+    }
+
+    private void publishStatusChange(AbsenceRequest request, AbsenceStatus from, String comment) {
+        eventPublisher.publishEvent(new AbsenceStatusChanged(request.getId(), currentUser.organizationId(),
+                request.getUser().getId(), currentUser.userId(), from, request.getStatus(), comment));
     }
 
     private AbsenceRequest findForApproval(UUID id) {
@@ -203,12 +214,10 @@ public class AbsenceRequestService {
 
     private void checkOverlap(UUID userId, LocalDate startDate, LocalDate endDate, UUID excludeId) {
         boolean overlaps = absenceRequestRepository
-                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId,
-                        List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
+                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId, List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
                 .stream()
                 .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))
-                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate)
-                        && !existing.getStartDate().isAfter(endDate));
+                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate) && !existing.getStartDate().isAfter(endDate));
         if (overlaps) {
             throw new BusinessRuleException("absence.overlap");
         }

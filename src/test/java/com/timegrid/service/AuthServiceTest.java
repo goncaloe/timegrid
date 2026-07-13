@@ -84,7 +84,8 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(new LoginRequest("goncalo.esteves", "errada")))
                 .isInstanceOf(UnauthorizedException.class);
         verify(refreshTokenService, never()).create(any(), any());
-        verify(logService).record(any(), any(), eq(LogAction.LOGIN_FAILED), any(), any(), eq("user.credentials.invalid"));
+        verify(logService).record(any(), any(), eq(LogAction.LOGIN_FAILED), any(), any(),
+                eq("user.credentials.invalid"));
     }
 
     @Test

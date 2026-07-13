@@ -6,6 +6,7 @@ import com.timegrid.entity.User;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.enums.TimeEntryType;
 import com.timegrid.enums.WorkflowEntityType;
+import com.timegrid.event.TimeEntryStatusChanged;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
@@ -25,12 +26,14 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.Mock;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +56,9 @@ class TimeEntryServiceTest {
 
     @Mock
     private StatusHistoryService statusHistoryService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private TimeEntryService timeEntryService;
@@ -195,6 +201,7 @@ class TimeEntryServiceTest {
         UUID userId = UUID.randomUUID();
         UUID id = UUID.randomUUID();
         TimeEntry entry = new TimeEntry();
+        entry.setUser(userWithId(userId));
         entry.setStatus(TimeEntryStatus.DRAFT);
 
         when(currentUser.userId()).thenReturn(userId);
@@ -204,6 +211,7 @@ class TimeEntryServiceTest {
         TimeEntry submitted = timeEntryService.submit(id);
 
         assertThat(submitted.getStatus()).isEqualTo(TimeEntryStatus.SUBMITTED);
+        verify(eventPublisher).publishEvent(any(TimeEntryStatusChanged.class));
     }
 
     @Test
