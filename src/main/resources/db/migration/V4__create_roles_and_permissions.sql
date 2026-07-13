@@ -37,7 +37,8 @@ insert into permissions (id, name, description) values
     (gen_random_uuid(), 'organization:write', 'edit organizations'),
     (gen_random_uuid(), 'time_entry:approve', 'approve time entries'),
     (gen_random_uuid(), 'absence:approve', 'approve absence requests'),
-    (gen_random_uuid(), 'workflow:manage', 'manage approval workflows');
+    (gen_random_uuid(), 'workflow:manage', 'manage approval workflows'),
+    (gen_random_uuid(), 'log:read', 'view logs');
 
 insert into role_permissions (role_id, permission_id)
 select r.id, p.id 
