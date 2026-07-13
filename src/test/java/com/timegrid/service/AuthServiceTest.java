@@ -9,12 +9,14 @@ import com.timegrid.entity.Permission;
 import com.timegrid.entity.RefreshToken;
 import com.timegrid.entity.Role;
 import com.timegrid.entity.User;
+import com.timegrid.enums.LogAction;
 import com.timegrid.enums.UserStatus;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.UnauthorizedException;
 import com.timegrid.security.AppUserDetails;
 import com.timegrid.security.AppUserDetailsService;
 import com.timegrid.security.JwtService;
+import com.timegrid.service.LogService;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
@@ -49,6 +51,9 @@ class AuthServiceTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private LogService logService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -67,6 +72,7 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo("access-1");
         assertThat(response.refreshToken()).isEqualTo("refresh-1");
         assertThat(response.roles()).containsExactly("ADMIN");
+        verify(logService).record(any(), any(), eq(LogAction.LOGIN_SUCCESS), any(), any(), any());
     }
 
     @Test
@@ -78,6 +84,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(new LoginRequest("goncalo.esteves", "errada")))
                 .isInstanceOf(UnauthorizedException.class);
         verify(refreshTokenService, never()).create(any(), any());
+        verify(logService).record(any(), any(), eq(LogAction.LOGIN_FAILED), any(), any(), eq("user.credentials.invalid"));
     }
 
     @Test

@@ -6,6 +6,7 @@ import com.timegrid.dto.LogoutRequest;
 import com.timegrid.dto.RefreshRequest;
 import com.timegrid.dto.RefreshResponse;
 import com.timegrid.entity.RefreshToken;
+import com.timegrid.enums.LogAction;
 import com.timegrid.enums.UserStatus;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.UnauthorizedException;
@@ -28,6 +29,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final LogService logService;
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
@@ -36,8 +38,10 @@ public class AuthService {
                 user.getId(), user.getOrganizationId(), user.getAuthorities());
         RefreshTokenService.IssuedToken refreshToken = refreshTokenService.create(
                 user.getId(), Instant.now().plus(jwtService.refreshTtl()));
-        return AuthResponse.from(user, accessToken.value(), accessToken.expiresAt(),
+        AuthResponse response = AuthResponse.from(user, accessToken.value(), accessToken.expiresAt(),
                 refreshToken.rawValue());
+        logService.record(user.getOrganizationId(), user.getId(), LogAction.LOGIN_SUCCESS, null, null, null);
+        return response;
     }
 
     @Transactional
@@ -48,7 +52,7 @@ public class AuthService {
         Instant now = Instant.now();
         if (token.isRevoked()) {
             // um token revogado só volta a aparecer aqui se alguém o copiou antes da rotação (ex.: roubado);
-            // não há como saber se foi o dono ou o atacante que chegou primeiro, por isso corta todos desse utilizador
+            // não há como saber se foi o dono ou o atacante que chegou primeiro, por isso corta tudo
             refreshTokenService.revokeAllForUser(token.getUserId(), now);
             throw new UnauthorizedException("auth.refresh.reused");
         }
@@ -69,8 +73,11 @@ public class AuthService {
 
     @Transactional
     public void logout(LogoutRequest request) {
-        refreshTokenService.findByValue(request.refreshToken())
-                .ifPresent(token -> refreshTokenService.revoke(token, Instant.now()));
+        refreshTokenService.findByValue(request.refreshToken()).ifPresent(token -> {
+            refreshTokenService.revoke(token, Instant.now());
+            AppUserDetails user = (AppUserDetails) userDetailsService.loadUserById(token.getUserId());
+            logService.record(user.getOrganizationId(), user.getId(), LogAction.LOGOUT, null, null, null);
+        });
     }
 
     private AppUserDetails authenticate(String username, String password) {
@@ -78,14 +85,26 @@ public class AuthService {
         try {
             user = (AppUserDetails) userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
+            logService.record(null, null, LogAction.LOGIN_FAILED, null, null, "username: " + username);
             throw new UnauthorizedException("user.credentials.invalid");
         }
 
+        try {
+            checkCanLogin(user, password);
+        } catch (UnauthorizedException | ForbiddenException e) {
+            logService.record(user.getOrganizationId(), user.getId(), LogAction.LOGIN_FAILED, null, null,
+                    e.getMessage());
+            throw e;
+        }
+        return user;
+    }
+
+    private void checkCanLogin(AppUserDetails user, String password) {
         if (user.isSoftDeleted()) {
             throw new UnauthorizedException("user.deleted");
         }
         if (user.getStatus() == UserStatus.LOCKED) {
-            throw new ForbiddenException("This user account is locked.");
+            throw new ForbiddenException("user.locked");
         }
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new UnauthorizedException("user.inactive");
@@ -93,7 +112,6 @@ public class AuthService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new UnauthorizedException("user.credentials.invalid");
         }
-        return user;
     }
 
     private AppUserDetails loadActive(UUID userId) {
