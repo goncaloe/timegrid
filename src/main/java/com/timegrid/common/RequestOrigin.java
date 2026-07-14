@@ -8,16 +8,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class RequestOrigin {
 
+    // não ler o X-Forwarded-For aqui: qualquer cliente o pode enviar. Atrás de um proxy o
+	// server.forward-headers-strategy trata disso e o getRemoteAddr já vem com o ip real
     public String ipAddress() {
         HttpServletRequest request = currentRequest();
-        if (request == null) {
-            return null;
-        }
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return request != null ? request.getRemoteAddr() : null;
     }
 
     public String userAgent() {

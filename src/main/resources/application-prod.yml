@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: ${TIMEGRID_DB_URL}
+    username: ${TIMEGRID_DB_USERNAME}
+    password: ${TIMEGRID_DB_PASSWORD}
+  jpa:
+    show-sql: false
+
+timegrid:
+  security:
+    jwt:
+      secret: ${TIMEGRID_JWT_SECRET}
+
+server:
+  forward-headers-strategy: native
