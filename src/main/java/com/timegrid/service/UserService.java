@@ -5,6 +5,7 @@ import com.timegrid.entity.Organization;
 import com.timegrid.entity.Role;
 import com.timegrid.entity.Team;
 import com.timegrid.entity.User;
+import com.timegrid.enums.LogAction;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.OrganizationRepository;
@@ -35,6 +36,7 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final CurrentUser currentUser;
+    private final LogService logService;
 
     @Transactional
     public User create(CreateUserRequest request) {
@@ -50,8 +52,7 @@ public class UserService {
 
         Team team = null;
         if (request.teamId() != null) {
-            team = teamRepository
-                    .findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
+            team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
                     .orElseThrow(() -> new NotFoundException("team.not-found", request.teamId()));
         }
 
@@ -67,7 +68,9 @@ public class UserService {
         user.setTeam(team);
         user.setRoles(Set.of(defaultRole));
 
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        recordLog(LogAction.USER_CREATED, saved, saved.getUsername());
+        return saved;
     }
 
     @Transactional(readOnly = true)
@@ -91,13 +94,16 @@ public class UserService {
                 .collect(Collectors.toSet());
 
         user.setRoles(roles);
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        recordLog(LogAction.ROLES_CHANGED, saved, String.join(",", roleNames.stream().sorted().toList()));
+        return saved;
     }
 
     @Transactional
     public void delete(UUID id) {
         User user = findById(id);
         user.setDeletedAt(Instant.now());
+        recordLog(LogAction.USER_DELETED, user, user.getUsername());
     }
 
     @Transactional
@@ -108,4 +114,9 @@ public class UserService {
         user.setDeletedAt(null);
         return userRepository.save(user);
     }
+
+    private void recordLog(LogAction action, User target, String details) {
+        logService.record(currentUser.organizationId(), currentUser.userId(), action, "USER", target.getId(), details);
+    }
+
 }

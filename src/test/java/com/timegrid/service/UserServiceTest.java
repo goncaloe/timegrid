@@ -1,21 +1,5 @@
 package com.timegrid.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
-import java.time.Instant;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.entity.Role;
@@ -27,6 +11,21 @@ import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
+import com.timegrid.service.LogService;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mock;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -48,6 +47,9 @@ class UserServiceTest {
 
     @Mock
     private CurrentUser currentUser;
+
+    @Mock
+    private LogService logService;
 
     @InjectMocks
     private UserService userService;
@@ -122,6 +124,40 @@ class UserServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.findById(id))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void updateRolesReplacesExistingRoles() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        User user = new User();
+        Role managerRole = new Role();
+        managerRole.setName("MANAGER");
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+        when(roleRepository.findByName("MANAGER")).thenReturn(Optional.of(managerRole));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User updated = userService.updateRoles(id, Set.of("MANAGER"));
+
+        assertThat(updated.getRoles()).containsExactly(managerRole);
+    }
+
+    @Test
+    void updateRolesRejectsUnknownRole() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        User user = new User();
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+        when(roleRepository.findByName("INEXISTENTE")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.updateRoles(id, Set.of("INEXISTENTE")))
                 .isInstanceOf(NotFoundException.class);
     }
 
