@@ -11,7 +11,9 @@
 		<p>Hello <span th:text="${recipientName}">Ines</span>,</p>
 		<h2 style="font-size:18px;margin:16px 0 8px;" th:text="${title}">Hours Register Approved</h2>
 		<p th:text="${message}">Your hours register was approved.</p>
-		<div th:if="${link != null}" th:replace="~{mail/layout :: button(${link}, 'View details')}"></div>
+		<th:block th:if="${link != null}">
+			<div th:replace="~{mail/layout :: button(${link}, 'View details')}"></div>
+		</th:block>
 	</div>
 	<div th:replace="~{mail/layout :: footer}"></div>
 </div>

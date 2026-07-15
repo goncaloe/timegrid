@@ -15,6 +15,11 @@ timegrid:
       secret: ${TIMEGRID_JWT_SECRET:}
       access-ttl: 15m
       refresh-ttl: 14d
+  notifications:
+    base-url: http://localhost:5173
+    email:
+      enabled: false
+      from: no-reply@timegrid.pt
 
 server:
   port: 8080

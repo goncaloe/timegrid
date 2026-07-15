@@ -3,6 +3,7 @@ package com.timegrid.listener;
 import com.timegrid.common.Messages;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.NotificationCategory;
+import com.timegrid.enums.NotificationType;
 import com.timegrid.enums.TimeEntryStatus;
 import com.timegrid.event.AbsenceStatusChanged;
 import com.timegrid.event.TimeEntryStatusChanged;
@@ -44,6 +45,7 @@ public class NotificationListener {
                 .orElse("");
         String key = "notification.time-entry." + event.to().name();
         notificationService.notify(event.ownerId(), event.organizationId(), NotificationCategory.TIME_ENTRY,
+                NotificationType.STATUS_CHANGED,
                 messages.get(key + ".title", LOCALE),
                 messages.get(key + ".message", LOCALE, date, event.comment()),
                 "/time-entries/" + event.timeEntryId());
@@ -59,6 +61,7 @@ public class NotificationListener {
                 .orElse("");
         String key = "notification.absence." + event.to().name();
         notificationService.notify(event.ownerId(), event.organizationId(), NotificationCategory.ABSENCE,
+                NotificationType.STATUS_CHANGED,
                 messages.get(key + ".title", LOCALE),
                 messages.get(key + ".message", LOCALE, period, event.comment()),
                 "/absences/" + event.absenceId());

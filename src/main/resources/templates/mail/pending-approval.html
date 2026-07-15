@@ -14,7 +14,9 @@
 			<strong th:text="${title}">Hours Register Submitted</strong><br>
 			<span th:text="${message}">Ines Moura submitted a hours register.</span>
 		</div>
-		<div th:if="${link != null}" th:replace="~{mail/layout :: button(${link}, 'Review order')}"></div>
+		<th:block th:if="${link != null}">
+			<div th:replace="~{mail/layout :: button(${link}, 'Review request')}"></div>
+		</th:block>
 	</div>
 	<div th:replace="~{mail/layout :: footer}"></div>
 </div>

@@ -3,6 +3,7 @@ package com.timegrid.service;
 import com.timegrid.entity.Notification;
 import com.timegrid.entity.User;
 import com.timegrid.enums.NotificationCategory;
+import com.timegrid.enums.NotificationType;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.NotificationRepository;
 import com.timegrid.repository.UserRepository;
@@ -40,8 +41,8 @@ public class NotificationService {
         this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
-    public Notification notify(UUID recipientId, UUID organizationId, NotificationCategory category, String title,
-            String message, String link) {
+    public Notification notify(UUID recipientId, UUID organizationId, NotificationCategory category,
+            NotificationType type, String title, String message, String link) {
         Notification notification = new Notification();
         notification.setRecipientId(recipientId);
         notification.setOrganizationId(organizationId);
@@ -51,14 +52,14 @@ public class NotificationService {
         notification.setLink(link);
         Notification saved = newTransaction.execute(status -> notificationRepository.save(notification));
 
-        userRepository.findById(recipientId).ifPresent(recipient -> deliver(saved, recipient));
+        userRepository.findById(recipientId).ifPresent(recipient -> deliver(saved, type, recipient));
         return saved;
     }
 
-    private void deliver(Notification notification, User recipient) {
+    private void deliver(Notification notification, NotificationType type, User recipient) {
         for (NotificationChannel channel : channels) {
             try {
-                channel.deliver(notification, recipient);
+                channel.deliver(notification, type, recipient);
             } catch (RuntimeException e) {
                 log.warn("Failed to deliver notification {} via the channel {}: {}", notification.getId(), channel.name(),
                         e.getMessage());
