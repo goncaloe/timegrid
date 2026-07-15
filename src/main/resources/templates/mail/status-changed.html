@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title th:text="${title}">Status changed</title>
+</head>
+<body style="margin:0;background:#f4f5f7;">
+<div style="max-width:560px;margin:24px auto;background:#ffffff;border:1px solid #e5e5e5;">
+	<div th:replace="~{mail/layout :: header}"></div>
+	<div style="padding:24px;font-family:Arial,sans-serif;font-size:14px;color:#222222;line-height:1.5;">
+		<p>Hello <span th:text="${recipientName}">Ines</span>,</p>
+		<h2 style="font-size:18px;margin:16px 0 8px;" th:text="${title}">Hours Register Approved</h2>
+		<p th:text="${message}">Your hours register was approved.</p>
+		<div th:if="${link != null}" th:replace="~{mail/layout :: button(${link}, 'View details')}"></div>
+	</div>
+	<div th:replace="~{mail/layout :: footer}"></div>
+</div>
+</body>
+</html>

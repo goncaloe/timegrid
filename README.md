@@ -36,6 +36,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - TanStack Query
 - TypeScript
 - Vite
+- Spring Mail com Thymeleaf
 
 ## Como executar
 

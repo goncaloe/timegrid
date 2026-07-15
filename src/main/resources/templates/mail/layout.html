@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>TimeGrid</title>
+</head>
+<body>
+
+<div th:fragment="header" style="background:#1f3a5f;color:#ffffff;padding:16px 24px;font-family:Arial,sans-serif;font-size:20px;font-weight:bold;">
+	TimeGrid
+</div>
+
+<div th:fragment="button(url, label)" style="margin:24px 0;">
+	<a th:href="${url}" th:text="${label}"
+	   style="background:#2d6cdf;color:#ffffff;padding:10px 18px;border-radius:4px;text-decoration:none;font-family:Arial,sans-serif;font-size:14px;">Open</a>
+</div>
+
+<div th:fragment="footer" style="padding:16px 24px;font-family:Arial,sans-serif;font-size:12px;color:#777777;border-top:1px solid #e5e5e5;">
+	You received this email because you have active email notifications in TimeGrid. Please do not reply to this message.
+</div>
+
+</body>
+</html>
