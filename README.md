@@ -19,6 +19,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - **Feriados**: os nacionais portugueses são calculados automaticamente (incluindo dias móveis como a Páscoa); cada empresa pode acrescentar os seus.
 - **Segurança**: Spring Security com JWT. CORS.
 - **Perfis (Admin, Gestor, Colaborador)**, com permissões RBAC.
+- **Notificações**: notificar utilizares por WebSocket (realtime no frontend) e por email.
 - **Logs**: auditar eventos como: logins (com sucesso e falhados), alterações de registos, mudanças de estado, etc.
 - **i18n**: mensagens de erro a inglês e português, conforme o `Accept-Language`.
 
