@@ -1,27 +1,45 @@
 package com.timegrid.service;
 
 import com.timegrid.entity.Notification;
+import com.timegrid.entity.User;
 import com.timegrid.enums.NotificationCategory;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.NotificationRepository;
+import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.TransactionDefinition;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final CurrentUser currentUser;
+    private final List<NotificationChannel> channels;
+    private final TransactionTemplate newTransaction;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public NotificationService(NotificationRepository notificationRepository, UserRepository userRepository,
+            CurrentUser currentUser, List<NotificationChannel> channels,
+            PlatformTransactionManager transactionManager) {
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
+        this.currentUser = currentUser;
+        this.channels = channels;
+        this.newTransaction = new TransactionTemplate(transactionManager);
+        this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
     public Notification notify(UUID recipientId, UUID organizationId, NotificationCategory category, String title,
             String message, String link) {
         Notification notification = new Notification();
@@ -31,7 +49,21 @@ public class NotificationService {
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setLink(link);
-        return notificationRepository.save(notification);
+        Notification saved = newTransaction.execute(status -> notificationRepository.save(notification));
+
+        userRepository.findById(recipientId).ifPresent(recipient -> deliver(saved, recipient));
+        return saved;
+    }
+
+    private void deliver(Notification notification, User recipient) {
+        for (NotificationChannel channel : channels) {
+            try {
+                channel.deliver(notification, recipient);
+            } catch (RuntimeException e) {
+                log.warn("Failed to deliver notification {} via the channel {}: {}", notification.getId(), channel.name(),
+                        e.getMessage());
+            }
+        }
     }
 
     @Transactional(readOnly = true)
