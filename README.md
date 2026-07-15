@@ -159,3 +159,10 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - implementar log de eventos na tabela `log_events`. Ao contrário do histórico, a ideia é registar operações não críticas na aplicação. Usar `ApplicationEventPublisher` e `@TransactionalEventListener` do spring para registar eventos. A ideia é que o service não precisa saber quais os listners estão ativos, e assim acrescentar listners novos é transparente. Usar transação própria com `REQUIRES_NEW` por não ser uma operação crítica. É uma versão mais simples do que implementei noutros projetos.
 - Endpoint `GET /api/log-events` com paginação e filtros opcionais
 - Usar `getRemoteAddr()` e não `X-Forwarded-For` porque pode ser forjado. Em produção `server.forward-headers-strategy: native` faz com que o Tomcat confie nesse cabeçalho só quando vem do proxy.
+
+### 15 Julho (Notificações)
+
+- Ha uns anos atrás criei um plugin para aplicações PHP com Yii2 a fim de gerir notificações centralizadas https://github.com/webzop/yii2-notifications. A proposta aqui é criar o mesmo conceito: Eventos geram notificações, que por sua vez são enviadas para múltiplos canais configurados usando o padrão strategy.
+- O caso de uso é notificar utilizadores especificos para aprovar registos de horas/ausências quando são criados. Usar o mecanismo de event listner do spring já usado anteriormente. O listner deve selecionar quem será notificado, guardar notificações numa tabela `notifications` da bd, e por fiz faz notify para que os canais registados processem as notificações.
+- Não faz sentido que os managers de uma organização grande recebam notificações (ex: para aprovar registos) de outros departamentos. Tentar usar managers do mesmo departamento para separação de notificações, e fallback com outros manages. Uso de departamentos é opcional.
+- O envio de notificações em `NotificationService::deliver` deve captar qualquer exceção disparada pelo channel com `try/catch`. Um email que falhou não deve parar todo o loop de envio. O mesmo principio foi implamentado no yii2-notifications em https://github.com/webzop/yii2-notifications/blob/master/Module.php#L35

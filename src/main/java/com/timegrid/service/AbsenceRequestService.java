@@ -1,4 +1,3 @@
-// FIXME: dias uteis com feriados de outras organizacoes?
 package com.timegrid.service;
 
 import com.timegrid.entity.AbsenceRequest;
