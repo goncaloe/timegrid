@@ -8,6 +8,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  mail:
+    host: localhost
+    port: 1025
 
 logging:
   level:
@@ -17,3 +20,6 @@ timegrid:
   security:
     jwt:
       secret: bXktdGltZWdyaWQtZGV2LXNlY3JldC1rZXktZm9yLWpzb24td2ViLXRva2Vucy10aW1lZ3JpZA==
+  notifications:
+    email:
+      enabled: true

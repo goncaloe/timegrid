@@ -5,11 +5,20 @@ spring:
     password: ${TIMEGRID_DB_PASSWORD}
   jpa:
     show-sql: false
+  mail:
+    host: ${TIMEGRID_MAIL_HOST:localhost}
+    port: ${TIMEGRID_MAIL_PORT:587}
+    username: ${TIMEGRID_MAIL_USERNAME:}
+    password: ${TIMEGRID_MAIL_PASSWORD:}
 
 timegrid:
   security:
     jwt:
       secret: ${TIMEGRID_JWT_SECRET}
+  notifications:
+    base-url: ${TIMEGRID_BASE_URL}
+    email:
+      enabled: ${TIMEGRID_MAIL_ENABLED:false}
 
 server:
   forward-headers-strategy: native
