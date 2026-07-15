@@ -30,6 +30,7 @@ public class LogService {
     private final OrganizationRepository organizationRepository;
     private final CurrentUser currentUser;
 
+    // transação própria: um login falhado faz rollback da transação do AuthService, mas o evento tem de ficar
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void record(UUID organizationId, UUID userId, LogAction action, String targetType, UUID targetId,
             String details) {
