@@ -169,3 +169,9 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - O caso de uso é notificar utilizadores especificos para aprovar registos de horas/ausências quando são criados. Usar o mecanismo de event listner do spring já usado anteriormente. O listner deve selecionar quem será notificado, guardar notificações numa tabela `notifications` da bd, e por fiz faz notify para que os canais registados processem as notificações.
 - Não faz sentido que os managers de uma organização grande recebam notificações (ex: para aprovar registos) de outros departamentos. Tentar usar managers do mesmo departamento para separação de notificações, e fallback com outros manages. Uso de departamentos é opcional.
 - O envio de notificações em `NotificationService::deliver` deve captar qualquer exceção disparada pelo channel com `try/catch`. Um email que falhou não deve parar todo o loop de envio. O mesmo principio foi implamentado no yii2-notifications em https://github.com/webzop/yii2-notifications/blob/master/Module.php#L35
+
+### 16 Julho (email e websocket)
+
+- Implementar channel de email, usando Mailpit no docker para simular uma conta de email. HTML dos emails gerados com Thymeleaf. O envio de emails é assícrono porque conexões SMTP são lentas e poderiam deixar utilizadores em espera.
+- Como o envio de emails usa `@Async`, o método `deliver` corre noutra thread e assim exçexões não são capturadas na thread principal. Por essa razão usa o log do `Slf4j` que regista o erro do envio, pois sem isso erros perdiam-se em silêncio.
+- Implementar channel para WebSocket com o protocolo STOMP para notificações realtime no browser. As ligações WebSocket são servidas no `/ws` e são protegidas no `StompAuthInterceptor.preSend` com validação de token JWT num cabeçalho nativo do frame `CONNECT`.
