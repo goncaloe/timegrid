@@ -4,9 +4,11 @@ import com.timegrid.entity.Notification;
 import com.timegrid.entity.User;
 import com.timegrid.enums.NotificationCategory;
 import com.timegrid.enums.NotificationType;
+import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.NotificationRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,7 +24,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.mail.MailSendException;
 import org.springframework.transaction.PlatformTransactionManager;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -62,7 +66,7 @@ class NotificationServiceTest {
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(recipient));
 
         Notification saved = notificationService.notify(USER_ID, ORG_ID, NotificationCategory.ABSENCE,
-                NotificationType.STATUS_CHANGED, "Absence request approved", "It was approved.", "/absences/1");
+                NotificationType.STATUS_CHANGED, "Pedido de ausência aprovado", "Foi aprovado.", "/absences/1");
 
         assertThat(saved.getRecipientId()).isEqualTo(USER_ID);
         assertThat(saved.getOrganizationId()).isEqualTo(ORG_ID);
@@ -119,6 +123,56 @@ class NotificationServiceTest {
         when(notificationRepository.findByRecipientId(USER_ID, pageable)).thenReturn(page);
 
         assertThat(notificationService.findOwn(false, pageable)).isSameAs(page);
+    }
+
+    @Test
+    void countUnreadIsForCurrentUser() {
+        when(currentUser.userId()).thenReturn(USER_ID);
+        when(notificationRepository.countByRecipientIdAndReadAtIsNull(USER_ID)).thenReturn(3L);
+
+        assertThat(notificationService.countUnread()).isEqualTo(3L);
+    }
+
+    @Test
+    void markReadSetsReadAt() {
+        UUID id = UUID.randomUUID();
+        Notification notification = new Notification();
+        when(currentUser.userId()).thenReturn(USER_ID);
+        when(notificationRepository.findByIdAndRecipientId(id, USER_ID)).thenReturn(Optional.of(notification));
+
+        Notification result = notificationService.markRead(id);
+
+        assertThat(result.isRead()).isTrue();
+    }
+
+    @Test
+    void markReadKeepsFirstReadAt() {
+        UUID id = UUID.randomUUID();
+        Instant firstRead = Instant.parse("2026-09-01T10:00:00Z");
+        Notification notification = new Notification();
+        notification.setReadAt(firstRead);
+        when(currentUser.userId()).thenReturn(USER_ID);
+        when(notificationRepository.findByIdAndRecipientId(id, USER_ID)).thenReturn(Optional.of(notification));
+
+        assertThat(notificationService.markRead(id).getReadAt()).isEqualTo(firstRead);
+    }
+
+    @Test
+    void markReadOfSomeoneElsesNotificationIsNotFound() {
+        UUID id = UUID.randomUUID();
+        when(currentUser.userId()).thenReturn(USER_ID);
+        when(notificationRepository.findByIdAndRecipientId(id, USER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> notificationService.markRead(id))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void markAllReadOnlyTouchesCurrentUser() {
+        when(currentUser.userId()).thenReturn(USER_ID);
+        when(notificationRepository.markAllRead(eq(USER_ID), any(Instant.class))).thenReturn(2);
+
+        assertThat(notificationService.markAllRead()).isEqualTo(2);
     }
 
 }
