@@ -21,6 +21,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - **Perfis (Admin, Gestor, Colaborador)**, com permissões RBAC.
 - **Notificações**: notificar utilizares por WebSocket (realtime no frontend) e por email.
 - **Logs**: auditar eventos como: logins (com sucesso e falhados), alterações de registos, mudanças de estado, etc.
+- **Exportações**: CSV, Excel e PDF.
 - **i18n**: mensagens de erro a inglês e português, conforme o `Accept-Language`.
 
 ## Tecnologias
