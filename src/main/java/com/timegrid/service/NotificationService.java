@@ -41,6 +41,8 @@ public class NotificationService {
         this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
+    // chamado a partir de listeners AFTER_COMMIT: grava numa transação nova e só entrega depois do commit,
+	// para quem recebe pelo websocket já encontrar a notificação no GET
     public Notification notify(UUID recipientId, UUID organizationId, NotificationCategory category,
             NotificationType type, String title, String message, String link) {
         Notification notification = new Notification();

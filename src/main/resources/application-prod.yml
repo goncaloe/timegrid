@@ -19,6 +19,8 @@ timegrid:
     base-url: ${TIMEGRID_BASE_URL}
     email:
       enabled: ${TIMEGRID_MAIL_ENABLED:false}
+  websocket:
+    allowed-origins: ${TIMEGRID_BASE_URL}
 
 server:
   forward-headers-strategy: native
