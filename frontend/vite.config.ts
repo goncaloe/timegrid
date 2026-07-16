@@ -6,9 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        rewrite: (path) => path,
+      '/api': 'http://localhost:8080',
+      '/ws': {
+        target: 'ws://localhost:8080',
+        ws: true,
       },
     },
   },

@@ -1,5 +1,6 @@
 package com.timegrid.enums;
 
+// não é gravado na bd: serve só para escolher o template do email
 public enum NotificationType {
 
     STATUS_CHANGED("mail/status-changed"),
