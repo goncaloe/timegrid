@@ -53,4 +53,24 @@ public interface TimeEntryRepository extends JpaRepository<TimeEntry, UUID> {
             """)
     List<TimeEntry> findForExport(UUID organizationId, LocalDate from, LocalDate to, UUID userId, UUID teamId);
 
+    // nativa por causa da diferença entre horas (time - time); inclui utilizadores sem registos no período
+    @Query(value = """
+            SELECT u.id AS userId,
+                   u.full_name AS fullName,
+                   t.name AS teamName,
+                   COUNT(te.id) AS entries,
+                   COALESCE(SUM(EXTRACT(EPOCH FROM (te.end_time - te.start_time)) / 60 - te.break_minutes), 0) AS minutes
+            FROM users u
+            LEFT JOIN teams t ON t.id = u.team_id
+            LEFT JOIN time_entries te ON te.user_id = u.id
+                  AND te.status = 'APPROVED'
+                  AND te.deleted_at IS NULL
+                  AND te.work_date BETWEEN :from AND :to
+            WHERE u.organization_id = :organizationId
+              AND u.deleted_at IS NULL
+            GROUP BY u.id, u.full_name, t.name
+            ORDER BY u.full_name
+            """, nativeQuery = true)
+    List<UserTimeTotals> sumApprovedByUser(UUID organizationId, LocalDate from, LocalDate to);
+
 }

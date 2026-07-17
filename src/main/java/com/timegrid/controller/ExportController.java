@@ -50,6 +50,15 @@ public class ExportController {
                 teamId));
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<byte[]> summary(
+            @RequestParam(defaultValue = "csv") String format,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to) {
+        LocalDate start = startOrDefault(from);
+        return download(exportService.summary(ExportFormat.parse(format), start, endOrDefault(start, to)));
+    }
+
     private static LocalDate startOrDefault(LocalDate from) {
         return from != null ? from : YearMonth.now().atDay(1);
     }

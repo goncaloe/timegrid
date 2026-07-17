@@ -5,18 +5,22 @@ import com.timegrid.common.WorkingDays;
 import com.timegrid.dto.ExportFile;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.TimeEntry;
+import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.LogAction;
 import com.timegrid.enums.ExportFormat;
 import com.timegrid.exception.BusinessRuleException;
 import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.TimeEntryRepository;
+import com.timegrid.repository.UserTimeTotals;
 import com.timegrid.security.CurrentUser;
+import com.timegrid.service.LogService;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Function;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -50,8 +54,7 @@ public class ExportService {
     public ExportFile timeEntries(ExportFormat format, LocalDate from, LocalDate to, UUID userId, UUID teamId) {
         checkPeriod(from, to);
         Locale locale = LocaleContextHolder.getLocale();
-        List<TimeEntry> entries = timeEntryRepository.findForExport(currentUser.organizationId(), from, to, userId,
-                teamId);
+        List<TimeEntry> entries = timeEntryRepository.findForExport(currentUser.organizationId(), from, to, userId, teamId);
 
         List<String> headers = List.of(
                 messages.get("export.header.user", locale),
@@ -65,8 +68,7 @@ public class ExportService {
                 messages.get("export.header.notes", locale));
         List<List<Object>> rows = new ArrayList<>();
         for (TimeEntry entry : entries) {
-            long minutes = Duration.between(entry.getStartTime(), entry.getEndTime()).toMinutes()
-                    - entry.getBreakMinutes();
+            long minutes = Duration.between(entry.getStartTime(), entry.getEndTime()).toMinutes() - entry.getBreakMinutes();
             rows.add(Arrays.asList(
                     entry.getUser().getFullName(),
                     entry.getWorkDate(),
@@ -110,6 +112,44 @@ public class ExportService {
         }
         ReportTable table = new ReportTable(messages.get("export.absences.title", locale), headers, rows);
         return generate(format, table, "absences", "absences", from, to);
+    }
+
+    @Transactional(readOnly = true)
+    public ExportFile summary(ExportFormat format, LocalDate from, LocalDate to) {
+        checkPeriod(from, to);
+        Locale locale = LocaleContextHolder.getLocale();
+        UUID organizationId = currentUser.organizationId();
+        List<UserTimeTotals> totals = timeEntryRepository.sumApprovedByUser(organizationId, from, to);
+
+        Map<UUID, Long> absenceDays = new HashMap<>();
+        for (AbsenceRequest request : absenceRequestRepository.findForExport(organizationId, from, to, null, null)) {
+            if (request.getStatus() != AbsenceStatus.APPROVED) {
+                continue;
+            }
+            LocalDate start = request.getStartDate().isBefore(from) ? from : request.getStartDate();
+            LocalDate end = request.getEndDate().isAfter(to) ? to : request.getEndDate();
+            absenceDays.merge(request.getUser().getId(), WorkingDays.between(start, end), Long::sum);
+        }
+
+        List<String> headers = List.of(
+                messages.get("export.header.user", locale),
+                messages.get("export.header.team", locale),
+                messages.get("export.header.approved-entries", locale),
+                messages.get("export.header.approved-hours", locale),
+                messages.get("export.header.approved-minutes", locale),
+                messages.get("export.header.absence-days", locale));
+        List<List<Object>> rows = new ArrayList<>();
+        for (UserTimeTotals total : totals) {
+            rows.add(Arrays.asList(
+                    total.getFullName(),
+                    total.getTeamName(),
+                    total.getEntries(),
+                    "%d:%02d".formatted(total.getMinutes() / 60, total.getMinutes() % 60),
+                    total.getMinutes(),
+                    absenceDays.getOrDefault(total.getUserId(), 0L)));
+        }
+        ReportTable table = new ReportTable(messages.get("export.summary.title", locale), headers, rows);
+        return generate(format, table, "summary", "summary", from, to);
     }
 
     private ExportFile generate(ExportFormat format, ReportTable table, String name, String kind, LocalDate from,
