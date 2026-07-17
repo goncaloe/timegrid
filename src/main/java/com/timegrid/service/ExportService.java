@@ -1,14 +1,16 @@
 package com.timegrid.service;
 
 import com.timegrid.common.Messages;
+import com.timegrid.common.WorkingDays;
 import com.timegrid.dto.ExportFile;
+import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.TimeEntry;
 import com.timegrid.enums.LogAction;
 import com.timegrid.enums.ExportFormat;
 import com.timegrid.exception.BusinessRuleException;
+import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.security.CurrentUser;
-import com.timegrid.service.LogService;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -28,14 +30,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExportService {
 
     private final TimeEntryRepository timeEntryRepository;
+    private final AbsenceRequestRepository absenceRequestRepository;
     private final CurrentUser currentUser;
     private final Messages messages;
     private final LogService logService;
     private final Map<ExportFormat, ReportWriter> writers;
 
-    public ExportService(TimeEntryRepository timeEntryRepository, CurrentUser currentUser, Messages messages,
-            LogService logService, List<ReportWriter> writers) {
+    public ExportService(TimeEntryRepository timeEntryRepository, AbsenceRequestRepository absenceRequestRepository,
+            CurrentUser currentUser, Messages messages, LogService logService, List<ReportWriter> writers) {
         this.timeEntryRepository = timeEntryRepository;
+        this.absenceRequestRepository = absenceRequestRepository;
         this.currentUser = currentUser;
         this.messages = messages;
         this.logService = logService;
@@ -78,6 +82,36 @@ public class ExportService {
         return generate(format, table, "entries", "time-entries", from, to);
     }
 
+    @Transactional(readOnly = true)
+    public ExportFile absences(ExportFormat format, LocalDate from, LocalDate to, UUID userId, UUID teamId) {
+        checkPeriod(from, to);
+        Locale locale = LocaleContextHolder.getLocale();
+        List<AbsenceRequest> requests = absenceRequestRepository.findForExport(currentUser.organizationId(), from, to,
+                userId, teamId);
+
+        List<String> headers = List.of(
+                messages.get("export.header.user", locale),
+                messages.get("export.header.start", locale),
+                messages.get("export.header.end", locale),
+                messages.get("export.header.working-days", locale),
+                messages.get("export.header.type", locale),
+                messages.get("export.header.status", locale),
+                messages.get("export.header.notes", locale));
+        List<List<Object>> rows = new ArrayList<>();
+        for (AbsenceRequest request : requests) {
+            rows.add(Arrays.asList(
+                    request.getUser().getFullName(),
+                    request.getStartDate(),
+                    request.getEndDate(),
+                    WorkingDays.between(request.getStartDate(), request.getEndDate()),
+                    messages.get("export.absence-type." + request.getType().name(), locale),
+                    messages.get("export.status." + request.getStatus().name(), locale),
+                    request.getNotes()));
+        }
+        ReportTable table = new ReportTable(messages.get("export.absences.title", locale), headers, rows);
+        return generate(format, table, "absences", "absences", from, to);
+    }
+
     private ExportFile generate(ExportFormat format, ReportTable table, String name, String kind, LocalDate from,
             LocalDate to) {
         ReportWriter writer = writers.get(format);
@@ -87,7 +121,7 @@ public class ExportService {
         byte[] content = writer.write(table);
         logService.record(currentUser.organizationId(), currentUser.userId(), LogAction.EXPORT_GENERATED,
                 "EXPORT", null,
-                kind + " " + format.extension() + " " + from + ".." + to + " (" + table.rows().size() + " linhas)");
+                kind + " " + format.extension() + " " + from + ".." + to + " (" + table.rows().size() + " lines)");
         return new ExportFile(filename(name, from, to, format), format, content);
     }
 

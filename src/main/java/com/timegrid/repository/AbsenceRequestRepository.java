@@ -29,7 +29,8 @@ public interface AbsenceRequestRepository extends JpaRepository<AbsenceRequest, 
 
     @EntityGraph(attributePaths = "user")
     @Query("""
-            SELECT ar FROM AbsenceRequest ar
+            SELECT ar
+            FROM AbsenceRequest ar
             WHERE ar.organization.id = :organizationId
               AND ar.status = :status
               AND ar.deletedAt IS NULL
@@ -37,5 +38,19 @@ public interface AbsenceRequestRepository extends JpaRepository<AbsenceRequest, 
             ORDER BY ar.startDate ASC
             """)
     List<AbsenceRequest> findPending(UUID organizationId, AbsenceStatus status, UUID teamId);
+
+    @Query("""
+            SELECT ar FROM AbsenceRequest ar
+            JOIN FETCH ar.user u
+            LEFT JOIN u.team t
+            WHERE ar.organization.id = :organizationId
+              AND ar.deletedAt IS NULL
+              AND ar.startDate <= :to
+              AND ar.endDate >= :from
+              AND (:userId IS NULL OR u.id = :userId)
+              AND (:teamId IS NULL OR t.id = :teamId)
+            ORDER BY u.fullName ASC, ar.startDate ASC
+            """)
+    List<AbsenceRequest> findForExport(UUID organizationId, LocalDate from, LocalDate to, UUID userId, UUID teamId);
 
 }
