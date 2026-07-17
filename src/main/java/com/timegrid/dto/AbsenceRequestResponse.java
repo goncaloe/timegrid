@@ -1,9 +1,9 @@
 package com.timegrid.dto;
 
+import com.timegrid.common.WorkingDays;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,7 +32,7 @@ public record AbsenceRequestResponse(
                 request.getUser().getFullName(),
                 request.getStartDate(),
                 request.getEndDate(),
-                workingDays(request.getStartDate(), request.getEndDate()),
+                WorkingDays.between(request.getStartDate(), request.getEndDate()),
                 request.getType(),
                 request.getNotes(),
                 request.getStatus(),
@@ -41,17 +41,6 @@ public record AbsenceRequestResponse(
                 request.getApprovedAt(),
                 request.getCreatedAt(),
                 allowedActions);
-    }
-
-    private static long workingDays(LocalDate startDate, LocalDate endDate) {
-        long days = 0;
-        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-            DayOfWeek dayOfWeek = date.getDayOfWeek();
-            if (dayOfWeek != DayOfWeek.SATURDAY && dayOfWeek != DayOfWeek.SUNDAY) {
-                days++;
-            }
-        }
-        return days;
     }
 
 }
