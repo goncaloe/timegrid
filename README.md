@@ -177,3 +177,11 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - Implementar channel de email, usando Mailpit no docker para simular uma conta de email. HTML dos emails gerados com Thymeleaf. O envio de emails é assícrono porque conexões SMTP são lentas e poderiam deixar utilizadores em espera.
 - Como o envio de emails usa `@Async`, o método `deliver` corre noutra thread e assim exçexões não são capturadas na thread principal. Por essa razão usa o log do `Slf4j` que regista o erro do envio, pois sem isso erros perdiam-se em silêncio.
 - Implementar channel para WebSocket com o protocolo STOMP para notificações realtime no browser. As ligações WebSocket são servidas no `/ws` e são protegidas no `StompAuthInterceptor.preSend` com validação de token JWT num cabeçalho nativo do frame `CONNECT`.
+
+### 17 Julho
+
+- Implementar APIs para exportar relatórios. Usar o mecanismo de injeção de dependência do spring com `List<Interface>` para registar todas as implementações de formatos de exportação. Neste caso acrescentar um novo formato basta criar um componente que faz `implements ReportWriter` que o `ExportService` o detecta automaticamente.
+- Implementar 3 formatos de exportação: CSV, Excel, PDF.
+- Implementar cálculo de feriados: será necessário para contagem de dias úteis / banco de horas. Há dois tipos: 
+- Feriados nacionais: calculados em código para qualquer ano. Calcular apenas feriados portugueses. Usar algoritmo de Gauss/Meeus para calcular o domingo de páscoa.
+- Feriados da organização: são guardados numa tabela da bd `holydays`. Exemplo: O Carnaval (que é facultativo) e feriados municipais.
