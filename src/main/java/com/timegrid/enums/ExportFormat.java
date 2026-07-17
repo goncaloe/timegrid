@@ -4,7 +4,8 @@ import com.timegrid.exception.BusinessRuleException;
 
 public enum ExportFormat {
 
-    CSV("csv", "text/csv;charset=UTF-8");
+    CSV("csv", "text/csv;charset=UTF-8"),
+    XLSX("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     private final String extension;
     private final String contentType;
