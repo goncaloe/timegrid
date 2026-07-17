@@ -39,6 +39,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - Vite
 - WebSocket/STOMP e STOMP.js
 - Spring Mail com Thymeleaf
+- PDFBox
 
 ## Como executar
 
