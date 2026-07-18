@@ -18,6 +18,17 @@ public interface AbsenceRequestRepository extends JpaRepository<AbsenceRequest, 
 
     List<AbsenceRequest> findByUserIdAndDeletedAtIsNullAndStatusNotIn(UUID userId, List<AbsenceStatus> statuses);
 
+    @Query("""
+            SELECT ar 
+            FROM AbsenceRequest ar
+            WHERE ar.user.id = :userId
+              AND ar.status = com.timegrid.enums.AbsenceStatus.APPROVED
+              AND ar.deletedAt IS NULL
+              AND ar.startDate <= :to
+              AND ar.endDate >= :from
+            """)
+    List<AbsenceRequest> findApprovedOverlapping(UUID userId, LocalDate from, LocalDate to);
+
     @EntityGraph(attributePaths = "user")
     Optional<AbsenceRequest> findByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
 
