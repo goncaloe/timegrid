@@ -17,6 +17,7 @@ public record UserResponse(
         UUID organizationId,
         UUID teamId,
         Set<String> roles,
+        int dailyWorkMinutes,
         Instant createdAt) {
 
     public static UserResponse from(User user) {
@@ -29,6 +30,7 @@ public record UserResponse(
                 user.getOrganization().getId(),
                 user.getTeam() != null ? user.getTeam().getId() : null,
                 user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()),
+                user.getDailyWorkMinutes(),
                 user.getCreatedAt());
     }
 

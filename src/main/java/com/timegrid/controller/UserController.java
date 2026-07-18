@@ -2,11 +2,11 @@ package com.timegrid.controller;
 
 import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.dto.PageResponse;
+import com.timegrid.dto.UpdateDailyWorkMinutesRequest;
 import com.timegrid.dto.UpdateUserRolesRequest;
 import com.timegrid.dto.UserResponse;
 import com.timegrid.service.UserService;
 import jakarta.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,11 +14,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,6 +58,13 @@ public class UserController {
     @PreAuthorize("hasAuthority('user:write')")
     public UserResponse updateRoles(@PathVariable UUID id, @Valid @RequestBody UpdateUserRolesRequest request) {
         return UserResponse.from(userService.updateRoles(id, request.roles()));
+    }
+
+    @PutMapping("/{id}/daily-work-minutes")
+    @PreAuthorize("hasAuthority('user:write')")
+    public UserResponse updateDailyWorkMinutes(@PathVariable UUID id,
+            @Valid @RequestBody UpdateDailyWorkMinutesRequest request) {
+        return UserResponse.from(userService.updateDailyWorkMinutes(id, request.dailyWorkMinutes()));
     }
 
     @DeleteMapping("/{id}")

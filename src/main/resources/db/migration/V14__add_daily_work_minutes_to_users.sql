@@ -1,0 +1,1 @@
+alter table users add column daily_work_minutes integer not null default 480;

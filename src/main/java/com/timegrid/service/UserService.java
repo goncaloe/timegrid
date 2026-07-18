@@ -15,8 +15,8 @@ import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import java.time.Instant;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,7 +52,8 @@ public class UserService {
 
         Team team = null;
         if (request.teamId() != null) {
-            team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
+            team = teamRepository
+                    .findByIdAndOrganizationIdAndDeletedAtIsNull(request.teamId(), currentUser.organizationId())
                     .orElseThrow(() -> new NotFoundException("team.not-found", request.teamId()));
         }
 
@@ -97,6 +98,13 @@ public class UserService {
         User saved = userRepository.save(user);
         recordLog(LogAction.ROLES_CHANGED, saved, String.join(",", roleNames.stream().sorted().toList()));
         return saved;
+    }
+
+    @Transactional
+    public User updateDailyWorkMinutes(UUID id, int dailyWorkMinutes) {
+        User user = findById(id);
+        user.setDailyWorkMinutes(dailyWorkMinutes);
+        return userRepository.save(user);
     }
 
     @Transactional
