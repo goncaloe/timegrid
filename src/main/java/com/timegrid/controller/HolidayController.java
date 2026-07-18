@@ -30,9 +30,7 @@ public class HolidayController {
     @GetMapping
     public List<HolidayResponse> findForYear(@RequestParam(required = false) Integer year) {
         int requestedYear = year != null ? year : LocalDate.now().getYear();
-        return holidayService.findForYear(requestedYear).stream()
-                .map(HolidayResponse::from)
-                .toList();
+        return holidayService.findForYear(requestedYear);
     }
 
     @PostMapping

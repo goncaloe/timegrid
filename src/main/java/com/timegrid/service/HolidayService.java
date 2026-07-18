@@ -1,11 +1,16 @@
 package com.timegrid.service;
 
+import com.timegrid.common.NationalHoliday;
+import com.timegrid.common.PortugueseHolidays;
+import com.timegrid.dto.HolidayResponse;
 import com.timegrid.entity.Holiday;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.repository.HolidayRepository;
 import com.timegrid.security.CurrentUser;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +25,20 @@ public class HolidayService {
     private final CurrentUser currentUser;
 
     @Transactional(readOnly = true)
-    public List<Holiday> findForYear(int year) {
+    public List<HolidayResponse> findForYear(int year) {
         LocalDate from = LocalDate.of(year, 1, 1);
         LocalDate to = LocalDate.of(year, 12, 31);
-        return holidayRepository.findByOrganizationIdAndDateBetweenOrderByDateAsc(currentUser.organizationId(), from,
-                to);
+
+        List<HolidayResponse> result = new ArrayList<>();
+        for (NationalHoliday holiday : PortugueseHolidays.of(year)) {
+            result.add(HolidayResponse.national(holiday));
+        }
+        for (Holiday holiday : holidayRepository.findByOrganizationIdAndDateBetweenOrderByDateAsc(
+                currentUser.organizationId(), from, to)) {
+            result.add(HolidayResponse.from(holiday));
+        }
+        result.sort(Comparator.comparing(HolidayResponse::date));
+        return result;
     }
 
     @Transactional
