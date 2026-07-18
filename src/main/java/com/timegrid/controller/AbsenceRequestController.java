@@ -104,7 +104,8 @@ public class AbsenceRequestController {
     }
 
     private AbsenceRequestResponse toResponse(AbsenceRequest request) {
-        return AbsenceRequestResponse.from(request, absenceRequestService.allowedActions(request));
+        long workingDays = absenceRequestService.workingDays(request);
+        return AbsenceRequestResponse.from(request, workingDays, absenceRequestService.allowedActions(request));
     }
 
 }

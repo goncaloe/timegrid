@@ -1,6 +1,5 @@
 package com.timegrid.dto;
 
-import com.timegrid.common.WorkingDays;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.enums.AbsenceStatus;
 import com.timegrid.enums.AbsenceType;
@@ -25,14 +24,14 @@ public record AbsenceRequestResponse(
         Instant createdAt,
         List<String> allowedActions) {
 
-    public static AbsenceRequestResponse from(AbsenceRequest request, List<String> allowedActions) {
+    public static AbsenceRequestResponse from(AbsenceRequest request, long workingDays, List<String> allowedActions) {
         return new AbsenceRequestResponse(
                 request.getId(),
                 request.getUser().getId(),
                 request.getUser().getFullName(),
                 request.getStartDate(),
                 request.getEndDate(),
-                WorkingDays.between(request.getStartDate(), request.getEndDate()),
+                workingDays,
                 request.getType(),
                 request.getNotes(),
                 request.getStatus(),

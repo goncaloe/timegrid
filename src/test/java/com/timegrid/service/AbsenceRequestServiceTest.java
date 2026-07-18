@@ -13,6 +13,7 @@ import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.UserRepository;
 import com.timegrid.security.CurrentUser;
 import com.timegrid.service.ApprovalPolicy;
+import com.timegrid.service.HolidayService;
 import com.timegrid.service.StatusHistoryService;
 import com.timegrid.service.WorkflowService;
 import java.time.LocalDate;
@@ -56,6 +57,9 @@ class AbsenceRequestServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private HolidayService holidayService;
 
     @InjectMocks
     private AbsenceRequestService absenceRequestService;

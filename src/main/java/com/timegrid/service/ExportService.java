@@ -1,7 +1,6 @@
 package com.timegrid.service;
 
 import com.timegrid.common.Messages;
-import com.timegrid.common.WorkingDays;
 import com.timegrid.dto.ExportFile;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.TimeEntry;
@@ -13,7 +12,6 @@ import com.timegrid.repository.AbsenceRequestRepository;
 import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserTimeTotals;
 import com.timegrid.security.CurrentUser;
-import com.timegrid.service.LogService;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -38,15 +36,18 @@ public class ExportService {
     private final CurrentUser currentUser;
     private final Messages messages;
     private final LogService logService;
+    private final HolidayService holidayService;
     private final Map<ExportFormat, ReportWriter> writers;
 
     public ExportService(TimeEntryRepository timeEntryRepository, AbsenceRequestRepository absenceRequestRepository,
-            CurrentUser currentUser, Messages messages, LogService logService, List<ReportWriter> writers) {
+            CurrentUser currentUser, Messages messages, LogService logService, HolidayService holidayService,
+            List<ReportWriter> writers) {
         this.timeEntryRepository = timeEntryRepository;
         this.absenceRequestRepository = absenceRequestRepository;
         this.currentUser = currentUser;
         this.messages = messages;
         this.logService = logService;
+        this.holidayService = holidayService;
         this.writers = writers.stream().collect(Collectors.toMap(ReportWriter::format, Function.identity()));
     }
 
@@ -54,7 +55,8 @@ public class ExportService {
     public ExportFile timeEntries(ExportFormat format, LocalDate from, LocalDate to, UUID userId, UUID teamId) {
         checkPeriod(from, to);
         Locale locale = LocaleContextHolder.getLocale();
-        List<TimeEntry> entries = timeEntryRepository.findForExport(currentUser.organizationId(), from, to, userId, teamId);
+        List<TimeEntry> entries = timeEntryRepository.findForExport(currentUser.organizationId(), from, to, userId,
+                teamId);
 
         List<String> headers = List.of(
                 messages.get("export.header.user", locale),
@@ -68,7 +70,8 @@ public class ExportService {
                 messages.get("export.header.notes", locale));
         List<List<Object>> rows = new ArrayList<>();
         for (TimeEntry entry : entries) {
-            long minutes = Duration.between(entry.getStartTime(), entry.getEndTime()).toMinutes() - entry.getBreakMinutes();
+            long minutes = Duration.between(entry.getStartTime(), entry.getEndTime()).toMinutes()
+                    - entry.getBreakMinutes();
             rows.add(Arrays.asList(
                     entry.getUser().getFullName(),
                     entry.getWorkDate(),
@@ -105,7 +108,8 @@ public class ExportService {
                     request.getUser().getFullName(),
                     request.getStartDate(),
                     request.getEndDate(),
-                    WorkingDays.between(request.getStartDate(), request.getEndDate()),
+                    holidayService.workingDays(currentUser.organizationId(), request.getStartDate(),
+                            request.getEndDate()),
                     messages.get("export.absence-type." + request.getType().name(), locale),
                     messages.get("export.status." + request.getStatus().name(), locale),
                     request.getNotes()));
@@ -128,7 +132,8 @@ public class ExportService {
             }
             LocalDate start = request.getStartDate().isBefore(from) ? from : request.getStartDate();
             LocalDate end = request.getEndDate().isAfter(to) ? to : request.getEndDate();
-            absenceDays.merge(request.getUser().getId(), WorkingDays.between(start, end), Long::sum);
+            absenceDays.merge(request.getUser().getId(), holidayService.workingDays(organizationId, start, end),
+                    Long::sum);
         }
 
         List<String> headers = List.of(

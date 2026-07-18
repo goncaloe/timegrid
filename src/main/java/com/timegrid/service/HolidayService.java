@@ -2,6 +2,7 @@ package com.timegrid.service;
 
 import com.timegrid.common.NationalHoliday;
 import com.timegrid.common.PortugueseHolidays;
+import com.timegrid.common.WorkingDays;
 import com.timegrid.dto.HolidayResponse;
 import com.timegrid.entity.Holiday;
 import com.timegrid.exception.ConflictException;
@@ -77,6 +78,11 @@ public class HolidayService {
             dates.add(holiday.getDate());
         }
         return dates;
+    }
+
+    @Transactional(readOnly = true)
+    public long workingDays(UUID organizationId, LocalDate from, LocalDate to) {
+        return WorkingDays.between(from, to, datesBetween(organizationId, from, to));
     }
 
 }

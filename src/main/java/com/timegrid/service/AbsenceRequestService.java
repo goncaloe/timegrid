@@ -33,6 +33,7 @@ public class AbsenceRequestService {
     private final WorkflowService workflowService;
     private final StatusHistoryService statusHistoryService;
     private final ApplicationEventPublisher eventPublisher;
+    private final HolidayService holidayService;
 
     @Transactional(readOnly = true)
     public List<AbsenceRequest> findOwn(Integer year) {
@@ -48,7 +49,14 @@ public class AbsenceRequestService {
 
     @Transactional(readOnly = true)
     public List<String> allowedActions(AbsenceRequest request) {
-        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(), currentUser.roles());
+        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+                currentUser.roles());
+    }
+
+    @Transactional(readOnly = true)
+    public long workingDays(AbsenceRequest request) {
+        return holidayService.workingDays(request.getOrganization().getId(), request.getStartDate(),
+                request.getEndDate());
     }
 
     @Transactional(readOnly = true)
@@ -214,10 +222,12 @@ public class AbsenceRequestService {
 
     private void checkOverlap(UUID userId, LocalDate startDate, LocalDate endDate, UUID excludeId) {
         boolean overlaps = absenceRequestRepository
-                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId, List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
+                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId,
+                        List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
                 .stream()
                 .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))
-                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate) && !existing.getStartDate().isAfter(endDate));
+                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate)
+                        && !existing.getStartDate().isAfter(endDate));
         if (overlaps) {
             throw new BusinessRuleException("absence.overlap");
         }
