@@ -11,7 +11,9 @@ import com.timegrid.security.CurrentUser;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -59,6 +61,22 @@ public class HolidayService {
         Holiday holiday = holidayRepository.findByIdAndOrganizationId(id, currentUser.organizationId())
                 .orElseThrow(() -> new NotFoundException("holiday.not-found", id));
         holidayRepository.delete(holiday);
+    }
+
+    @Transactional(readOnly = true)
+    public Set<LocalDate> datesBetween(UUID organizationId, LocalDate from, LocalDate to) {
+        Set<LocalDate> dates = new HashSet<>();
+        for (int year = from.getYear(); year <= to.getYear(); year++) {
+            for (NationalHoliday holiday : PortugueseHolidays.of(year)) {
+                if (!holiday.date().isBefore(from) && !holiday.date().isAfter(to)) {
+                    dates.add(holiday.date());
+                }
+            }
+        }
+        for (Holiday holiday : holidayRepository.findByOrganizationIdAndDateBetweenOrderByDateAsc(organizationId, from, to)) {
+            dates.add(holiday.getDate());
+        }
+        return dates;
     }
 
 }
