@@ -1,13 +1,27 @@
 package com.timegrid.seed;
 
+import com.timegrid.entity.AbsenceRequest;
+import com.timegrid.entity.Holiday;
 import com.timegrid.entity.Organization;
 import com.timegrid.entity.Team;
+import com.timegrid.entity.TimeEntry;
 import com.timegrid.entity.Role;
 import com.timegrid.entity.User;
+import com.timegrid.enums.AbsenceStatus;
+import com.timegrid.enums.AbsenceType;
+import com.timegrid.enums.TimeEntryStatus;
+import com.timegrid.enums.TimeEntryType;
+import com.timegrid.repository.AbsenceRequestRepository;
+import com.timegrid.repository.HolidayRepository;
 import com.timegrid.repository.OrganizationRepository;
 import com.timegrid.repository.RoleRepository;
 import com.timegrid.repository.TeamRepository;
+import com.timegrid.repository.TimeEntryRepository;
 import com.timegrid.repository.UserRepository;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
@@ -31,6 +45,9 @@ public class DemoDataLoader implements ApplicationRunner {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final HolidayRepository holidayRepository;
+    private final TimeEntryRepository timeEntryRepository;
+    private final AbsenceRequestRepository absenceRequestRepository;
 
     @Override
     @Transactional
@@ -58,9 +75,9 @@ public class DemoDataLoader implements ApplicationRunner {
 
         createUser("goncalo.esteves", "goncalo.esteves@tejodigital.pt", "Gonçalo Esteves",
                 ADMIN_PASSWORD, "ADMIN", tejoDigital, null);
-        createUser("tiago.figueiredo", "tiago.figueiredo@tejodigital.pt", "Tiago Figueiredo",
+        User tiagoFigueiredo = createUser("tiago.figueiredo", "tiago.figueiredo@tejodigital.pt", "Tiago Figueiredo",
                 MANAGER_PASSWORD, "MANAGER", tejoDigital, itTejo);
-        createUser("ines.moura", "ines.moura@tejodigital.pt", "Inês Moura",
+        User inesMoura = createUser("ines.moura", "ines.moura@tejodigital.pt", "Inês Moura",
                 EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, itTejo);
         createUser("miguel.rodrigues", "miguel.rodrigues@tejodigital.pt", "Miguel Rodrigues",
                 EMPLOYEE_PASSWORD, "EMPLOYEE", tejoDigital, itTejo);
@@ -88,6 +105,62 @@ public class DemoDataLoader implements ApplicationRunner {
                 MANAGER_PASSWORD, "MANAGER", atlanticoLogistica, operacoesAtlantico);
         createUser("carla.nunes", "carla.nunes@atlanticologistica.pt", "Carla Nunes",
                 EMPLOYEE_PASSWORD, "EMPLOYEE", atlanticoLogistica, armazemAtlantico);
+
+        holidayRepository.save(demoHoliday(tejoDigital, LocalDate.of(2026, 6, 13), "Santo António"));
+        holidayRepository.save(demoHoliday(norteSoftware, LocalDate.of(2026, 6, 24), "São João"));
+        holidayRepository
+                .save(demoHoliday(atlanticoLogistica, LocalDate.of(2026, 5, 20), "Dia da Região Autónoma dos Açores"));
+
+        seedTimeBankSample(tejoDigital, inesMoura, tiagoFigueiredo);
+    }
+
+    private Holiday demoHoliday(Organization organization, LocalDate date, String name) {
+        Holiday holiday = new Holiday();
+        holiday.setOrganizationId(organization.getId());
+        holiday.setDate(date);
+        holiday.setName(name);
+        return holiday;
+    }
+
+    // dados para o GET /api/time-bank/me da ines.moura dar um saldo com dias de vários tipos
+    private void seedTimeBankSample(Organization organization, User user, User approver) {
+        createApprovedTimeEntry(user, organization, LocalDate.of(2026, 7, 7), LocalTime.of(9, 0), LocalTime.of(18, 0),
+                60, approver);
+        createApprovedTimeEntry(user, organization, LocalDate.of(2026, 7, 8), LocalTime.of(9, 0), LocalTime.of(18, 0),
+                60, approver);
+        createApprovedTimeEntry(user, organization, LocalDate.of(2026, 7, 9), LocalTime.of(9, 0), LocalTime.of(18, 0),
+                60, approver);
+        createApprovedTimeEntry(user, organization, LocalDate.of(2026, 7, 10), LocalTime.of(9, 0), LocalTime.of(18, 0),
+                60, approver);
+        createApprovedTimeEntry(user, organization, LocalDate.of(2026, 7, 13), LocalTime.of(9, 0), LocalTime.of(19, 30),
+                60, approver);
+
+        AbsenceRequest vacation = new AbsenceRequest();
+        vacation.setUser(user);
+        vacation.setOrganization(organization);
+        vacation.setStartDate(LocalDate.of(2026, 7, 14));
+        vacation.setEndDate(LocalDate.of(2026, 7, 15));
+        vacation.setType(AbsenceType.VACATION);
+        vacation.setStatus(AbsenceStatus.APPROVED);
+        vacation.setApprover(approver);
+        vacation.setApprovedAt(Instant.now());
+        absenceRequestRepository.save(vacation);
+    }
+
+    private void createApprovedTimeEntry(User user, Organization organization, LocalDate date, LocalTime start,
+            LocalTime end, int breakMinutes, User approver) {
+        TimeEntry entry = new TimeEntry();
+        entry.setUser(user);
+        entry.setOrganization(organization);
+        entry.setWorkDate(date);
+        entry.setStartTime(start);
+        entry.setEndTime(end);
+        entry.setBreakMinutes(breakMinutes);
+        entry.setType(TimeEntryType.OFFICE);
+        entry.setStatus(TimeEntryStatus.APPROVED);
+        entry.setApprover(approver);
+        entry.setApprovedAt(Instant.now());
+        timeEntryRepository.save(entry);
     }
 
     private Organization createOrganization(String name, String timezone) {

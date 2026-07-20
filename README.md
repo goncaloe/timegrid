@@ -185,3 +185,7 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - Implementar cálculo de feriados: será necessário para contagem de dias úteis / banco de horas. Há dois tipos: 
 - Feriados nacionais: calculados em código para qualquer ano. Calcular apenas feriados portugueses. Usar algoritmo de Gauss/Meeus para calcular o domingo de páscoa.
 - Feriados da organização: são guardados numa tabela da bd `holydays`. Exemplo: O Carnaval (que é facultativo) e feriados municipais.
+
+### 20 Julho
+
+- Banco de horas: o calculo é feito a partir soma de horas trabalhadas menos as horas esperadas para cada dia. Esperado é igual ao valor de `user.dailyWorkMinutes` se for um dia útil (excepto fim-de-semana, feriado, ausência). Horas trabalhadas é a soma dos registos de horas aprovados (não apagados) desse dia, sem os minutos de pausa.
