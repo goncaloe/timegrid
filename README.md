@@ -37,6 +37,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - TanStack Query
 - TypeScript
 - Vite
+- GitHub Actions (build, testes, lint)
 - WebSocket/STOMP e STOMP.js
 - Spring Mail com Thymeleaf
 - PDFBox
