@@ -40,6 +40,7 @@ A minha proposta é desenvolver um software de gestão de presenças e ausência
 - GitHub Actions (build, testes, lint)
 - WebSocket/STOMP e STOMP.js
 - Spring Mail com Thymeleaf
+- springdoc-openapi
 - PDFBox
 
 ## Como executar
