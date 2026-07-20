@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CsvWriter implements ReportWriter {
 
+    // o Excel em PT usa ; como separador e só deteta UTF-8 com BOM
     private static final String BOM = "﻿";
     private static final char SEPARATOR = ';';
 

@@ -121,6 +121,7 @@ public class PdfWriter implements ReportWriter {
         content.endText();
     }
 
+    // largura proporcional ao texto mais comprido de cada coluna, mas com limite para as notas não comerem tudo
     private static float[] columnWidths(ReportTable table) {
         int columns = table.headers().size();
         int[] chars = new int[columns];
@@ -161,6 +162,7 @@ public class PdfWriter implements ReportWriter {
         return font.getStringWidth(value) / 1000 * FONT_SIZE;
     }
 
+    // a Helvetica standard só tem WinAnsi: emojis e afins nas notas passam a '?'
     private static String clean(PDFont font, String value) {
         StringBuilder result = new StringBuilder(value.length());
         value.codePoints().forEach(cp -> {

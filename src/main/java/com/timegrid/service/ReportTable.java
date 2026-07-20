@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+// células podem ser String, Number, LocalDate ou LocalTime; cada writer decide como as escreve
 public record ReportTable(
         String title,
         List<String> headers,

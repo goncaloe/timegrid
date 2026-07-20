@@ -87,6 +87,7 @@ public class ExportService {
         return generate(format, table, "entries", "time-entries", from, to);
     }
 
+    // ausências que se sobrepõem ao período, com as datas completas do pedido
     @Transactional(readOnly = true)
     public ExportFile absences(ExportFormat format, LocalDate from, LocalDate to, UUID userId, UUID teamId) {
         checkPeriod(from, to);

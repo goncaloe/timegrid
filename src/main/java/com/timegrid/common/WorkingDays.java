@@ -9,6 +9,7 @@ public final class WorkingDays {
     private WorkingDays() {
     }
 
+    // seg-sex entre as duas datas, inclusive, excluindo os feriados dados
     public static long between(LocalDate startDate, LocalDate endDate, Set<LocalDate> holidays) {
         long days = 0;
         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {

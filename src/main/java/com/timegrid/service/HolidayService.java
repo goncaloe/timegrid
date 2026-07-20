@@ -64,6 +64,7 @@ public class HolidayService {
         holidayRepository.delete(holiday);
     }
 
+    // feriados nacionais + da organização, para descontar dias úteis (banco de horas, ausências)
     @Transactional(readOnly = true)
     public Set<LocalDate> datesBetween(UUID organizationId, LocalDate from, LocalDate to) {
         Set<LocalDate> dates = new HashSet<>();

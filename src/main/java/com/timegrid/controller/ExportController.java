@@ -59,6 +59,7 @@ public class ExportController {
         return download(exportService.summary(ExportFormat.parse(format), start, endOrDefault(start, to)));
     }
 
+    // sem datas exporta o mês corrente
     private static LocalDate startOrDefault(LocalDate from) {
         return from != null ? from : YearMonth.now().atDay(1);
     }

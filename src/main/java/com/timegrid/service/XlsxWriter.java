@@ -66,7 +66,8 @@ public class XlsxWriter implements ReportWriter {
                     widths[c] = Math.max(widths[c], ReportTable.text(value).length());
                 }
             }
-
+            
+            // largura calculada à mão: autoSizeColumn precisa de fontes AWT, que não existem na imagem docker
             for (int c = 0; c < columns; c++) {
                 sheet.setColumnWidth(c, (Math.min(widths[c], MAX_COLUMN_CHARS) + 2) * 256);
             }
