@@ -27,3 +27,11 @@ export function formatDate(isoDate: string): string {
 export function formatWeekday(date: Date): string {
   return date.toLocaleDateString('pt-PT', { weekday: 'short' });
 }
+
+export function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+export function endOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
