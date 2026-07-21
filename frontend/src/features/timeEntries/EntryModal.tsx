@@ -6,7 +6,7 @@ import { ApiError } from '../../api/client';
 import { useCreateTimeEntry, useUpdateTimeEntry } from './hooks';
 import type { TimeEntry, TimeEntryInput, TimeEntryType } from './api';
 import { toIsoDate } from '../../utils/date';
-import styles from './EntryModal.module.css';
+import styles from '../../components/FormModal.module.css';
 
 const TYPE_OPTIONS: { value: TimeEntryType; label: string }[] = [
   { value: 'OFFICE', label: 'Escritório' },
