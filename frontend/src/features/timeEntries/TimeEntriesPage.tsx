@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type MouseEvent } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
 import Button from '../../components/Button';
+import Modal from '../../components/Modal';
+import StatusHistory from '../../components/StatusHistory';
 import EntryModal from './EntryModal';
-import { useTimeEntries } from './hooks';
+import { useDeleteTimeEntry, useSubmitTimeEntry, useTimeEntries, useTimeEntryHistory } from './hooks';
 import type { TimeEntry } from './api';
 import { addDays, formatWeekday, startOfWeek, toIsoDate } from '../../utils/date';
 import styles from './TimeEntriesPage.module.css';
@@ -39,14 +41,29 @@ function formatDuration(minutes: number) {
 function TimeEntriesPage() {
   const [reference, setReference] = useState(() => new Date());
   const [modalState, setModalState] = useState<ModalState>(null);
+  const [historyEntryId, setHistoryEntryId] = useState<string | null>(null);
   const weekStart = useMemo(() => startOfWeek(reference), [reference]);
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
   const from = toIsoDate(weekStart);
   const to = toIsoDate(weekEnd);
 
   const { data: entries, isLoading } = useTimeEntries(from, to);
+  const { data: history } = useTimeEntryHistory(historyEntryId);
+  const submitMutation = useSubmitTimeEntry();
+  const deleteMutation = useDeleteTimeEntry();
 
   const total = (entries ?? []).reduce((sum, entry) => sum + entry.durationMinutes, 0);
+
+  function stopAnd(event: MouseEvent, action: () => void) {
+    event.stopPropagation();
+    action();
+  }
+
+  function handleDelete(id: string) {
+    if (window.confirm('Eliminar este registo?')) {
+      deleteMutation.mutate(id);
+    }
+  }
 
   return (
     <div>
@@ -97,6 +114,7 @@ function TimeEntriesPage() {
               <th>Tipo</th>
               <th>Notas</th>
               <th>Estado</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -119,6 +137,33 @@ function TimeEntriesPage() {
                   <td>{TYPE_LABELS[entry.type] ?? entry.type}</td>
                   <td className={styles.notesCell}>{entry.notes}</td>
                   <td>{STATUS_LABELS[entry.status] ?? entry.status}</td>
+                  <td className={styles.actionsCell}>
+                    {entry.allowedActions.includes('SUBMITTED') && (
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={(event) => stopAnd(event, () => submitMutation.mutate(entry.id))}
+                      >
+                        Submeter
+                      </button>
+                    )}
+                    {isEditable(entry.status) && (
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={(event) => stopAnd(event, () => handleDelete(entry.id))}
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.linkButton}
+                      onClick={(event) => stopAnd(event, () => setHistoryEntryId(entry.id))}
+                    >
+                      Histórico
+                    </button>
+                  </td>
                 </tr>
               ))}
           </tbody>
@@ -130,6 +175,12 @@ function TimeEntriesPage() {
           entry={modalState.mode === 'edit' ? modalState.entry : undefined}
           onClose={() => setModalState(null)}
         />
+      )}
+
+      {historyEntryId && (
+        <Modal title="Histórico do registo" onClose={() => setHistoryEntryId(null)}>
+          <StatusHistory changes={history ?? []} statusLabels={STATUS_LABELS} />
+        </Modal>
       )}
     </div>
   );
