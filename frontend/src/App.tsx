@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import Spinner from './components/Spinner';
 import RequireAuth from './auth/RequireAuth';
 import DashboardPage from './pages/DashboardPage';
+import TimeEntriesPage from './features/timeEntries/TimeEntriesPage';
 import UsersPage from './features/users/UsersPage';
 import TeamsPage from './features/teams/TeamsPage';
 import OrganizationPage from './features/organization/OrganizationPage';
@@ -29,9 +30,10 @@ function App() {
         <Route element={<RequireAuth />}>
           <Route element={<Layout />}>
             <Route path="/" element={<DashboardPage />} />
-              <Route path="/users" element={<UsersPage />} />
-              <Route path="/teams" element={<TeamsPage />} />
-              <Route path="/organization" element={<OrganizationPage />} />
+            <Route path="/time-entries" element={<TimeEntriesPage />} />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/teams" element={<TeamsPage />} />
+            <Route path="/organization" element={<OrganizationPage />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
