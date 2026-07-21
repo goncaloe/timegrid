@@ -1,9 +1,18 @@
 import { useMemo, useState } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import Button from '../../components/Button';
+import EntryModal from './EntryModal';
 import { useTimeEntries } from './hooks';
+import type { TimeEntry } from './api';
 import { addDays, formatWeekday, startOfWeek, toIsoDate } from '../../utils/date';
 import styles from './TimeEntriesPage.module.css';
+
+function isEditable(status: string) {
+  return status === 'DRAFT' || status === 'REJECTED';
+}
+
+type ModalState = { mode: 'create' } | { mode: 'edit'; entry: TimeEntry } | null;
 
 const TYPE_LABELS: Record<string, string> = {
   OFFICE: 'Escritório',
@@ -29,6 +38,7 @@ function formatDuration(minutes: number) {
 
 function TimeEntriesPage() {
   const [reference, setReference] = useState(() => new Date());
+  const [modalState, setModalState] = useState<ModalState>(null);
   const weekStart = useMemo(() => startOfWeek(reference), [reference]);
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
   const from = toIsoDate(weekStart);
@@ -64,6 +74,9 @@ function TimeEntriesPage() {
           <span>Total da semana</span>
           <span className={styles.summaryValue}>{formatDuration(total)}</span>
         </div>
+        <Button type="button" onClick={() => setModalState({ mode: 'create' })}>
+          Novo registo
+        </Button>
       </div>
 
       {isLoading && <Spinner />}
@@ -91,7 +104,10 @@ function TimeEntriesPage() {
               .slice()
               .sort((a, b) => a.workDate.localeCompare(b.workDate))
               .map((entry) => (
-                <tr key={entry.id}>
+                <tr
+                  key={entry.id}
+                  onClick={() => isEditable(entry.status) && setModalState({ mode: 'edit', entry })}
+                >
                   <td className={styles.weekdayCell}>
                     {formatWeekday(new Date(`${entry.workDate}T00:00:00`))} {entry.workDate.slice(8, 10)}/
                     {entry.workDate.slice(5, 7)}
@@ -107,6 +123,13 @@ function TimeEntriesPage() {
               ))}
           </tbody>
         </table>
+      )}
+
+      {modalState && (
+        <EntryModal
+          entry={modalState.mode === 'edit' ? modalState.entry : undefined}
+          onClose={() => setModalState(null)}
+        />
       )}
     </div>
   );
