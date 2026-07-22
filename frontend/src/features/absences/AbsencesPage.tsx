@@ -4,6 +4,7 @@ import EmptyState from '../../components/EmptyState';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
+import StatusBadge from '../../components/StatusBadge';
 import AbsenceModal from './AbsenceModal';
 import { useAbsenceHistory, useAbsences, useCancelAbsence, useDeleteAbsence, useSubmitAbsence } from './hooks';
 import type { AbsenceRequest } from './api';
@@ -102,7 +103,9 @@ function AbsencesPage() {
                   <td>{absence.workingDays}</td>
                   <td>{TYPE_LABELS[absence.type] ?? absence.type}</td>
                   <td className={styles.notesCell}>{absence.notes}</td>
-                  <td>{STATUS_LABELS[absence.status] ?? absence.status}</td>
+                  <td>
+                    <StatusBadge status={absence.status} label={STATUS_LABELS[absence.status] ?? absence.status} />
+                  </td>
                   <td className={styles.actionsCell}>
                     {absence.allowedActions.includes('SUBMITTED') && (
                       <button

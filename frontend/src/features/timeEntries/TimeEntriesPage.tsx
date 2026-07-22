@@ -5,9 +5,11 @@ import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
 import EntryModal from './EntryModal';
+import StatusBadge from '../../components/StatusBadge';
 import { useDeleteTimeEntry, useSubmitTimeEntry, useTimeEntries, useTimeEntryHistory } from './hooks';
 import type { TimeEntry } from './api';
 import { addDays, formatWeekday, startOfWeek, toIsoDate } from '../../utils/date';
+import { formatMinutes } from '../../utils/formatMinutes';
 import styles from './TimeEntriesPage.module.css';
 
 function isEditable(status: string) {
@@ -29,14 +31,6 @@ const STATUS_LABELS: Record<string, string> = {
   APPROVED: 'Aprovado',
   REJECTED: 'Rejeitado',
 };
-
-function formatDuration(minutes: number) {
-  const sign = minutes < 0 ? '-' : '';
-  const abs = Math.abs(minutes);
-  const hours = Math.floor(abs / 60);
-  const mins = abs % 60;
-  return `${sign}${hours}h${mins.toString().padStart(2, '0')}`;
-}
 
 function TimeEntriesPage() {
   const [reference, setReference] = useState(() => new Date());
@@ -89,7 +83,7 @@ function TimeEntriesPage() {
         </div>
         <div className={styles.summary}>
           <span>Total da semana</span>
-          <span className={styles.summaryValue}>{formatDuration(total)}</span>
+          <span className={styles.summaryValue}>{formatMinutes(total)}</span>
         </div>
         <Button type="button" onClick={() => setModalState({ mode: 'create' })}>
           Novo registo
@@ -133,10 +127,12 @@ function TimeEntriesPage() {
                   <td>{entry.startTime.slice(0, 5)}</td>
                   <td>{entry.endTime.slice(0, 5)}</td>
                   <td>{entry.breakMinutes} min</td>
-                  <td>{formatDuration(entry.durationMinutes)}</td>
+                  <td>{formatMinutes(entry.durationMinutes)}</td>
                   <td>{TYPE_LABELS[entry.type] ?? entry.type}</td>
                   <td className={styles.notesCell}>{entry.notes}</td>
-                  <td>{STATUS_LABELS[entry.status] ?? entry.status}</td>
+                  <td>
+                    <StatusBadge status={entry.status} label={STATUS_LABELS[entry.status] ?? entry.status} />
+                  </td>
                   <td className={styles.actionsCell}>
                     {entry.allowedActions.includes('SUBMITTED') && (
                       <button

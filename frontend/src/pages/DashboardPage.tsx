@@ -6,15 +6,8 @@ import { useTimeEntries } from '../features/timeEntries/hooks';
 import { useAbsences } from '../features/absences/hooks';
 import { useHolidays } from '../features/holidays/hooks';
 import { addDays, formatDate, startOfMonth, startOfWeek, endOfMonth, toIsoDate } from '../utils/date';
+import { formatMinutes } from '../utils/formatMinutes';
 import styles from './DashboardPage.module.css';
-
-function formatDuration(minutes: number) {
-  const sign = minutes < 0 ? '-' : '';
-  const abs = Math.abs(minutes);
-  const hours = Math.floor(abs / 60);
-  const mins = abs % 60;
-  return `${sign}${hours}h${mins.toString().padStart(2, '0')}`;
-}
 
 const ABSENCE_TYPE_LABELS: Record<string, string> = {
   VACATION: 'Férias',
@@ -56,7 +49,7 @@ function DashboardPage() {
         {isLoadingBalance && <Spinner />}
         {!isLoadingBalance && balance && (
           <p className={`${styles.cardValue} ${balance.balanceMinutes >= 0 ? styles.positive : styles.negative}`}>
-            {formatDuration(balance.balanceMinutes)}
+            {formatMinutes(balance.balanceMinutes)}
           </p>
         )}
       </div>
@@ -64,7 +57,7 @@ function DashboardPage() {
       <div className={styles.card}>
         <p className={styles.cardTitle}>Horas esta semana</p>
         {isLoadingWeek && <Spinner />}
-        {!isLoadingWeek && <p className={styles.cardValue}>{formatDuration(weekTotal)}</p>}
+        {!isLoadingWeek && <p className={styles.cardValue}>{formatMinutes(weekTotal)}</p>}
       </div>
 
       <div className={styles.card}>
