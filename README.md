@@ -191,3 +191,9 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 ### 20 Julho
 
 - Banco de horas: o calculo é feito a partir soma de horas trabalhadas menos as horas esperadas para cada dia. Esperado é igual ao valor de `user.dailyWorkMinutes` se for um dia útil (excepto fim-de-semana, feriado, ausência). Horas trabalhadas é a soma dos registos de horas aprovados (não apagados) desse dia, sem os minutos de pausa.
+
+### 22 Julho (Páginas)
+
+- cada registo de hora/ausência traz a lista de estados para onde o utilizador o pode transitar em `.allowedActions` calculados no servidor. O frontend usa isto para decidir que botões aparecem, em vez de duplicar as regras/logica do workflow.
+- Páginas do frontend por funcionalidade: registos com vista semanal, ausências com formulário, aprovações com separadores dos pendentes, dashboard com o banco de horas, feriados, notificações e exportações.
+- O sino das notificações mostra o contador das não lidas e recebe-as em tempo real por WebSocket/STOMP.
