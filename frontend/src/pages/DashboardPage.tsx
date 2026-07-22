@@ -5,7 +5,7 @@ import { useTimeBankMe } from '../features/timebank/hooks';
 import { useTimeEntries } from '../features/timeEntries/hooks';
 import { useAbsences } from '../features/absences/hooks';
 import { useHolidays } from '../features/holidays/hooks';
-import { addDays, formatDate, startOfMonth, startOfWeek, endOfMonth, toIsoDate } from '../utils/date';
+import { addDays, formatDate, startOfMonth, startOfWeek, toIsoDate } from '../utils/date';
 import { formatMinutes } from '../utils/formatMinutes';
 import styles from './DashboardPage.module.css';
 
@@ -20,7 +20,7 @@ const ABSENCE_TYPE_LABELS: Record<string, string> = {
 function DashboardPage() {
   const today = useMemo(() => new Date(), []);
   const monthFrom = toIsoDate(startOfMonth(today));
-  const monthTo = toIsoDate(endOfMonth(today));
+  const monthTo = toIsoDate(today);
   const weekStart = startOfWeek(today);
   const weekFrom = toIsoDate(weekStart);
   const weekTo = toIsoDate(addDays(weekStart, 6));
