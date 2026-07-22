@@ -61,3 +61,14 @@ export function deleteTimeEntry(id: string) {
 export function submitTimeEntry(id: string) {
   return apiFetch<TimeEntry>(`/time-entries/${id}/submit`, { method: 'POST' });
 }
+
+export function approveTimeEntry(id: string) {
+  return apiFetch<TimeEntry>(`/time-entries/${id}/approve`, { method: 'POST' });
+}
+
+export function rejectTimeEntry(id: string, reason: string) {
+  return apiFetch<TimeEntry>(`/time-entries/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}

@@ -62,3 +62,14 @@ export function submitAbsence(id: string) {
 export function cancelAbsence(id: string) {
   return apiFetch<AbsenceRequest>(`/absences/${id}/cancel`, { method: 'POST' });
 }
+
+export function approveAbsence(id: string) {
+  return apiFetch<AbsenceRequest>(`/absences/${id}/approve`, { method: 'POST' });
+}
+
+export function rejectAbsence(id: string, reason: string) {
+  return apiFetch<AbsenceRequest>(`/absences/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ reason }),
+  });
+}
