@@ -11,6 +11,7 @@ import TeamsPage from './features/teams/TeamsPage';
 import OrganizationPage from './features/organization/OrganizationPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
+import WebSocketProvider from './features/notifications/WebSocketProvider';
 import { useAuth } from './auth/useAuth';
 import styles from './App.module.css';
 
@@ -27,6 +28,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <WebSocketProvider />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<RequireAuth />}>
