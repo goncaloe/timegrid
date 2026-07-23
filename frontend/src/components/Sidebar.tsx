@@ -15,6 +15,9 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Feriados', path: '/holidays' },
   { label: 'Aprovações', path: '/approvals', permissions: ['time_entry:approve', 'absence:approve'] },
   { label: 'Utilizadores', path: '/users', permissions: ['user:write'] },
+  { label: 'Departamentos', path: '/teams', permissions: ['team:write'] },
+  { label: 'Organização', path: '/organization', permissions: ['organization:write'] },
+  { label: 'Exportações', path: '/exports', permissions: ['report:export'] },
 ];
 
 function Sidebar() {

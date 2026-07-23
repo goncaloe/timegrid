@@ -11,17 +11,13 @@
   font-size: 18px;
 }
 
-.tableWrap {
-  overflow-x: auto;
-}
-
 .table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  min-width: 520px;
 }
 
 .table th,
@@ -40,6 +36,13 @@
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   white-space: nowrap;
 }
 
@@ -95,24 +98,4 @@
 
 .secondaryButton:hover {
   background: var(--color-bg);
-}
-
-.emptyState {
-  padding: var(--space-5);
-  text-align: center;
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.actionsCell {
-  vertical-align: middle;
-}
-
-.actionsInner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
 }
