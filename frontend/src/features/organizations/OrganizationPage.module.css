@@ -1,0 +1,46 @@
+.title {
+  margin: 0 0 var(--space-4);
+  font-size: 18px;
+}
+
+.form {
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  text-align: left;
+}
+
+.label {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.select {
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: inherit;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+.saved {
+  font-size: 13px;
+  color: var(--color-success);
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
