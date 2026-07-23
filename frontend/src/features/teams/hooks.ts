@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteTeam, fetchTeams, restoreTeam, type TeamInput } from './api';
+import { createTeam, deleteTeam, fetchTeams, restoreTeam, updateTeam, type TeamInput } from './api';
 
 export function useTeams() {
   return useQuery({
@@ -11,6 +11,22 @@ export function useTeams() {
 function useInvalidateTeams() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: ['teams'] });
+}
+
+export function useCreateTeam() {
+  const invalidate = useInvalidateTeams();
+  return useMutation({
+    mutationFn: (input: TeamInput) => createTeam(input),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateTeam() {
+  const invalidate = useInvalidateTeams();
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: TeamInput }) => updateTeam(id, input),
+    onSuccess: invalidate,
+  });
 }
 
 export function useDeleteTeam() {
