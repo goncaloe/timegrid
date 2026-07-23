@@ -12,6 +12,7 @@ import ApprovalsPage from './features/approvals/ApprovalsPage';
 import UsersPage from './features/users/UsersPage';
 import TeamsPage from './features/teams/TeamsPage';
 import OrganizationPage from './features/organizations/OrganizationPage';
+import ExportsPage from './features/exports/ExportsPage';
 import WebSocketProvider from './features/notifications/WebSocketProvider';
 import { useAuth } from './auth/useAuth';
 import styles from './App.module.css';
@@ -42,6 +43,7 @@ function App() {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/teams" element={<TeamsPage />} />
             <Route path="/organization" element={<OrganizationPage />} />
+            <Route path="/exports" element={<ExportsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<NotFoundPage />} />
