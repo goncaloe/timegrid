@@ -4,6 +4,7 @@ import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.dto.PageResponse;
 import com.timegrid.dto.UpdateDailyWorkMinutesRequest;
 import com.timegrid.dto.UpdateUserRolesRequest;
+import com.timegrid.dto.UpdateUserTeamRequest;
 import com.timegrid.dto.UserResponse;
 import com.timegrid.service.UserService;
 import jakarta.validation.Valid;
@@ -65,6 +66,12 @@ public class UserController {
     public UserResponse updateDailyWorkMinutes(@PathVariable UUID id,
             @Valid @RequestBody UpdateDailyWorkMinutesRequest request) {
         return UserResponse.from(userService.updateDailyWorkMinutes(id, request.dailyWorkMinutes()));
+    }
+
+    @PutMapping("/{id}/team")
+    @PreAuthorize("hasAuthority('user:write')")
+    public UserResponse updateTeam(@PathVariable UUID id, @Valid @RequestBody UpdateUserTeamRequest request) {
+        return UserResponse.from(userService.updateTeam(id, request.teamId()));
     }
 
     @DeleteMapping("/{id}")

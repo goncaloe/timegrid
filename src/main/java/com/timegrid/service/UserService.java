@@ -108,6 +108,20 @@ public class UserService {
     }
 
     @Transactional
+    public User updateTeam(UUID id, UUID teamId) {
+        User user = findById(id);
+
+        Team team = null;
+        if (teamId != null) {
+            team = teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(teamId, currentUser.organizationId())
+                    .orElseThrow(() -> new NotFoundException("team.not-found", teamId));
+        }
+
+        user.setTeam(team);
+        return userRepository.save(user);
+    }
+
+    @Transactional
     public void delete(UUID id) {
         User user = findById(id);
         user.setDeletedAt(Instant.now());

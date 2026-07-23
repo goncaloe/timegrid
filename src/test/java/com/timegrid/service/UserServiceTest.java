@@ -3,6 +3,7 @@ package com.timegrid.service;
 import com.timegrid.dto.CreateUserRequest;
 import com.timegrid.entity.Organization;
 import com.timegrid.entity.Role;
+import com.timegrid.entity.Team;
 import com.timegrid.entity.User;
 import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.NotFoundException;
@@ -158,6 +159,60 @@ class UserServiceTest {
         when(roleRepository.findByName("INEXISTENTE")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.updateRoles(id, Set.of("INEXISTENTE")))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void updateTeamMovesUserToAnotherTeamInSameOrganization() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        User user = new User();
+        Team team = new Team();
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+        when(teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(teamId, organizationId))
+                .thenReturn(Optional.of(team));
+        when(userRepository.save(user)).thenReturn(user);
+
+        User updated = userService.updateTeam(id, teamId);
+
+        assertThat(updated.getTeam()).isSameAs(team);
+    }
+
+    @Test
+    void updateTeamClearsTeamWhenNull() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        User user = new User();
+        user.setTeam(new Team());
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        User updated = userService.updateTeam(id, null);
+
+        assertThat(updated.getTeam()).isNull();
+    }
+
+    @Test
+    void updateTeamRejectsTeamFromAnotherOrganization() {
+        UUID organizationId = UUID.randomUUID();
+        UUID id = UUID.randomUUID();
+        UUID teamId = UUID.randomUUID();
+        User user = new User();
+
+        when(currentUser.organizationId()).thenReturn(organizationId);
+        when(userRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(id, organizationId))
+                .thenReturn(Optional.of(user));
+        when(teamRepository.findByIdAndOrganizationIdAndDeletedAtIsNull(teamId, organizationId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.updateTeam(id, teamId))
                 .isInstanceOf(NotFoundException.class);
     }
 
