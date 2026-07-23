@@ -75,6 +75,53 @@ interface RequestOptions extends RequestInit {
   auth?: boolean;
 }
 
+export interface DownloadResult {
+  blob: Blob;
+  filename: string;
+}
+
+// download de ficheiros (exportações): devolve o blob e o nome que veio no
+// Content-Disposition, com o mesmo refresh em 401 do apiFetch
+function downloadWithToken(path: string): Promise<Response> {
+  const headers = new Headers();
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+  return fetch(`/api${path}`, { headers });
+}
+
+async function parseFilename(response: Response, fallback: string): Promise<string> {
+  const disposition = response.headers.get('content-disposition');
+  const match = disposition?.match(/filename\*=UTF-8''([^;]+)/i);
+  if (match) {
+    return decodeURIComponent(match[1]);
+  }
+  const plainMatch = disposition?.match(/filename="?([^";]+)"?/i);
+  return plainMatch ? plainMatch[1] : fallback;
+}
+
+export async function downloadFile(path: string): Promise<DownloadResult> {
+  let response = await downloadWithToken(path);
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      response = await downloadWithToken(path);
+    } else {
+      setAccessToken(null);
+      setStoredRefreshToken(null);
+      onSessionExpired?.();
+    }
+  }
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!response.ok) {
+    const body = contentType.includes('application/json') ? await response.json() : undefined;
+    throw new ApiError(response.status, body ?? {});
+  }
+  const blob = await response.blob();
+  const filename = await parseFilename(response, 'timegrid-export');
+  return { blob, filename };
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}, retryOn401 = true): Promise<T> {
   const { auth = true, headers, ...rest } = options;
   const finalHeaders = new Headers(headers);
