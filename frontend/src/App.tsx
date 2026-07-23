@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import TimeEntriesPage from './features/timeEntries/TimeEntriesPage';
 import AbsencesPage from './features/absences/AbsencesPage';
 import HolidaysPage from './features/holidays/HolidaysPage';
+import ApprovalsPage from './features/approvals/ApprovalsPage';
 import UsersPage from './features/users/UsersPage';
 import TeamsPage from './features/teams/TeamsPage';
 import OrganizationPage from './features/organization/OrganizationPage';
@@ -37,6 +38,7 @@ function App() {
             <Route path="/time-entries" element={<TimeEntriesPage />} />
             <Route path="/absences" element={<AbsencesPage />} />
             <Route path="/holidays" element={<HolidaysPage />} />
+            <Route path="/approvals" element={<ApprovalsPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/teams" element={<TeamsPage />} />
             <Route path="/organization" element={<OrganizationPage />} />
