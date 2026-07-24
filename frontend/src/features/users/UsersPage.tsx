@@ -121,27 +121,27 @@ function UsersPage() {
           </div>
 
           {pageData && pageData.totalPages > 1 && (
-              <div className={styles.pagination}>
-                  <button
-                      type="button"
-                      className={styles.navButton}
-                      disabled={page === 0}
-                      onClick={() => setPage((current) => current - 1)}
-                  >
-                      ← anteriores
-                  </button>
-                  <span className={styles.pageLabel}>
-                      Página {page + 1} de {pageData.totalPages}
-                  </span>
-                  <button
-                      type="button"
-                      className={styles.navButton}
-                      disabled={page >= pageData.totalPages - 1}
-                      onClick={() => setPage((current) => current + 1)}
-                  >
-                      seguintes →
-                  </button>
-              </div>
+            <div className={styles.pagination}>
+              <button
+                type="button"
+                className={styles.navButton}
+                disabled={page === 0}
+                onClick={() => setPage((current) => current - 1)}
+              >
+                ← anteriores
+              </button>
+              <span className={styles.pageLabel}>
+                Página {page + 1} de {pageData.totalPages}
+              </span>
+              <button
+                type="button"
+                className={styles.navButton}
+                disabled={page >= pageData.totalPages - 1}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                seguintes →
+              </button>
+            </div>
           )}
         </>
       )}
