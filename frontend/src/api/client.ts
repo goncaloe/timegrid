@@ -1,4 +1,5 @@
 import type { ProblemDetail } from './types';
+import { isJsonContentType } from '../utils/http';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -114,7 +115,7 @@ export async function downloadFile(path: string): Promise<DownloadResult> {
   }
   const contentType = response.headers.get('content-type') ?? '';
   if (!response.ok) {
-    const body = contentType.includes('application/json') ? await response.json() : undefined;
+    const body = isJsonContentType(contentType) ? await response.json() : undefined;
     throw new ApiError(response.status, body ?? {});
   }
   const blob = await response.blob();
@@ -148,8 +149,8 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}, re
     return undefined as T;
   }
 
-  const isJson = response.headers.get('content-type')?.includes('application/json');
-  const body = isJson ? await response.json() : undefined;
+  const contentType = response.headers.get('content-type') ?? '';
+  const body = isJsonContentType(contentType) ? await response.json() : undefined;
 
   if (!response.ok) {
     throw new ApiError(response.status, (body as ProblemDetail) ?? {});
