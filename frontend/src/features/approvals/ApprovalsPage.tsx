@@ -111,6 +111,7 @@ function ApprovalsPage() {
             <EmptyState message="Sem registos de horas por aprovar." />
           )}
           {!isLoadingTimeEntries && (timeEntries ?? []).length > 0 && (
+            <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -171,6 +172,7 @@ function ApprovalsPage() {
                   ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
       )}
@@ -182,6 +184,7 @@ function ApprovalsPage() {
             <EmptyState message="Sem pedidos de ausência por aprovar." />
           )}
           {!isLoadingAbsences && (absences ?? []).length > 0 && (
+            <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -238,6 +241,7 @@ function ApprovalsPage() {
                   ))}
               </tbody>
             </table>
+            </div>
           )}
         </section>
       )}

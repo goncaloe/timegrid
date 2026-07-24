@@ -64,6 +64,7 @@ function UsersPage() {
 
       {!isLoading && users.length > 0 && (
         <>
+          <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
@@ -117,6 +118,7 @@ function UsersPage() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {pageData && pageData.totalPages > 1 && (
               <div className={styles.pagination}>

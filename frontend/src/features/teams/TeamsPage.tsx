@@ -45,6 +45,7 @@ function TeamsPage() {
       {!isLoading && (teams ?? []).length === 0 && <EmptyState message="Sem departamentos nesta organização." />}
 
       {!isLoading && (teams ?? []).length > 0 && (
+        <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -72,6 +73,7 @@ function TeamsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
 
       {modalState && canManage && (
