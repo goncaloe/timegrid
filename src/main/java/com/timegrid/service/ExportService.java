@@ -1,6 +1,7 @@
 package com.timegrid.service;
 
 import com.timegrid.common.Messages;
+import com.timegrid.common.WorkingDays;
 import com.timegrid.dto.ExportFile;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.TimeEntry;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.UUID;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -94,6 +96,7 @@ public class ExportService {
         Locale locale = LocaleContextHolder.getLocale();
         List<AbsenceRequest> requests = absenceRequestRepository.findForExport(currentUser.organizationId(), from, to,
                 userId, teamId);
+        Set<LocalDate> holidays = holidaysCovering(currentUser.organizationId(), from, to, requests);
 
         List<String> headers = List.of(
                 messages.get("export.header.user", locale),
@@ -109,8 +112,7 @@ public class ExportService {
                     request.getUser().getFullName(),
                     request.getStartDate(),
                     request.getEndDate(),
-                    holidayService.workingDays(currentUser.organizationId(), request.getStartDate(),
-                            request.getEndDate()),
+                    WorkingDays.between(request.getStartDate(), request.getEndDate(), holidays),
                     messages.get("export.absence-type." + request.getType().name(), locale),
                     messages.get("export.status." + request.getStatus().name(), locale),
                     request.getNotes()));
@@ -126,6 +128,8 @@ public class ExportService {
         UUID organizationId = currentUser.organizationId();
         List<UserTimeTotals> totals = timeEntryRepository.sumApprovedByUser(organizationId, from, to);
 
+        // dias de ausência aprovados contados só dentro do período pedido
+        Set<LocalDate> holidays = holidayService.datesBetween(organizationId, from, to);
         Map<UUID, Long> absenceDays = new HashMap<>();
         for (AbsenceRequest request : absenceRequestRepository.findForExport(organizationId, from, to, null, null)) {
             if (request.getStatus() != AbsenceStatus.APPROVED) {
@@ -133,8 +137,7 @@ public class ExportService {
             }
             LocalDate start = request.getStartDate().isBefore(from) ? from : request.getStartDate();
             LocalDate end = request.getEndDate().isAfter(to) ? to : request.getEndDate();
-            absenceDays.merge(request.getUser().getId(), holidayService.workingDays(organizationId, start, end),
-                    Long::sum);
+            absenceDays.merge(request.getUser().getId(), WorkingDays.between(start, end, holidays), Long::sum);
         }
 
         List<String> headers = List.of(
@@ -182,6 +185,25 @@ public class ExportService {
         if (to.isBefore(from)) {
             throw new BusinessRuleException("export.invalid-period");
         }
+    }
+
+    // uma única consulta de feriados para todas as linhas do relatório (as datas
+    // completas do pedido podem
+    // ultrapassar o período pedido, ao contrário do resumo, que já vem cortado a
+    // from..to)
+    private Set<LocalDate> holidaysCovering(UUID organizationId, LocalDate from, LocalDate to,
+            List<AbsenceRequest> requests) {
+        LocalDate rangeFrom = from;
+        LocalDate rangeTo = to;
+        for (AbsenceRequest request : requests) {
+            if (request.getStartDate().isBefore(rangeFrom)) {
+                rangeFrom = request.getStartDate();
+            }
+            if (request.getEndDate().isAfter(rangeTo)) {
+                rangeTo = request.getEndDate();
+            }
+        }
+        return holidayService.datesBetween(organizationId, rangeFrom, rangeTo);
     }
 
 }
