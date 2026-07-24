@@ -12,12 +12,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class WorkflowService {
+
+    private static final String CACHE_NAME = "workflowTransitions";
 
     private final WorkflowTransitionRepository workflowTransitionRepository;
 
@@ -30,6 +34,7 @@ public class WorkflowService {
         }
     }
 
+    @Cacheable(CACHE_NAME)
     @Transactional(readOnly = true)
     public List<String> allowedTargets(WorkflowEntityType entityType, String fromStatus, List<String> roles) {
         return workflowTransitionRepository.findAllowedTargets(entityType, fromStatus, roles);
@@ -40,6 +45,7 @@ public class WorkflowService {
         return workflowTransitionRepository.findAllByOrderByEntityTypeAscFromStatusAscToStatusAsc();
     }
 
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
     @Transactional
     public WorkflowTransition create(WorkflowEntityType entityType, String fromStatus, String toStatus, String role) {
         validateStatus(entityType, fromStatus);
@@ -66,6 +72,7 @@ public class WorkflowService {
         }
     }
 
+    @CacheEvict(value = CACHE_NAME, allEntries = true)
     @Transactional
     public void delete(UUID id) {
         if (!workflowTransitionRepository.existsById(id)) {
