@@ -1,5 +1,6 @@
 package com.timegrid.service;
 
+import com.timegrid.common.WorkingDays;
 import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.entity.StatusChange;
 import com.timegrid.entity.User;
@@ -16,6 +17,9 @@ import com.timegrid.security.CurrentUser;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,6 +61,20 @@ public class AbsenceRequestService {
     public long workingDays(AbsenceRequest request) {
         return holidayService.workingDays(request.getOrganization().getId(), request.getStartDate(),
                 request.getEndDate());
+    }
+
+    // uma única consulta de feriados para a lista toda, em vez de uma por pedido
+    // era o caso de N+1 nas listagens
+    @Transactional(readOnly = true)
+    public Map<UUID, Long> workingDaysBatch(List<AbsenceRequest> requests) {
+        if (requests.isEmpty()) {
+            return Map.of();
+        }
+        LocalDate from = requests.stream().map(AbsenceRequest::getStartDate).min(LocalDate::compareTo).orElseThrow();
+        LocalDate to = requests.stream().map(AbsenceRequest::getEndDate).max(LocalDate::compareTo).orElseThrow();
+        Set<LocalDate> holidays = holidayService.datesBetween(currentUser.organizationId(), from, to);
+        return requests.stream().collect(Collectors.toMap(AbsenceRequest::getId,
+                request -> WorkingDays.between(request.getStartDate(), request.getEndDate(), holidays)));
     }
 
     @Transactional(readOnly = true)

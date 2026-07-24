@@ -9,6 +9,7 @@ import com.timegrid.entity.AbsenceRequest;
 import com.timegrid.service.AbsenceRequestService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -33,9 +34,7 @@ public class AbsenceRequestController {
 
     @GetMapping
     public List<AbsenceRequestResponse> findOwn(@RequestParam(required = false) Integer year) {
-        return absenceRequestService.findOwn(year).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(absenceRequestService.findOwn(year));
     }
 
     @GetMapping("/{id}/history")
@@ -48,9 +47,7 @@ public class AbsenceRequestController {
     @GetMapping("/pending")
     @PreAuthorize("hasAuthority('absence:approve')")
     public List<AbsenceRequestResponse> pending(@RequestParam(required = false) UUID teamId) {
-        return absenceRequestService.findPending(teamId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponses(absenceRequestService.findPending(teamId));
     }
 
     @PostMapping
@@ -106,6 +103,14 @@ public class AbsenceRequestController {
     private AbsenceRequestResponse toResponse(AbsenceRequest request) {
         long workingDays = absenceRequestService.workingDays(request);
         return AbsenceRequestResponse.from(request, workingDays, absenceRequestService.allowedActions(request));
+    }
+
+    private List<AbsenceRequestResponse> toResponses(List<AbsenceRequest> requests) {
+        Map<UUID, Long> workingDays = absenceRequestService.workingDaysBatch(requests);
+        return requests.stream()
+                .map(request -> AbsenceRequestResponse.from(request, workingDays.get(request.getId()),
+                        absenceRequestService.allowedActions(request)))
+                .toList();
     }
 
 }
