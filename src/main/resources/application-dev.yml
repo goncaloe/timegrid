@@ -23,3 +23,5 @@ timegrid:
   notifications:
     email:
       enabled: true
+  seed:
+    enabled: true

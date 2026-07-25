@@ -21,5 +21,28 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  backend:
+    build:
+      context: .
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TIMEGRID_DB_URL: jdbc:postgresql://db:5432/timegrid
+      TIMEGRID_DB_USERNAME: timegrid
+      TIMEGRID_DB_PASSWORD: timegrid
+      TIMEGRID_JWT_SECRET: ${TIMEGRID_JWT_SECRET:-bXktdGltZWdyaWQtZGV2LXNlY3JldC1rZXktZm9yLWpzb24td2ViLXRva2Vucy10aW1lZ3JpZA==}
+      TIMEGRID_BASE_URL: http://localhost:3000
+      TIMEGRID_MAIL_HOST: mailpit
+      TIMEGRID_MAIL_PORT: 1025
+      TIMEGRID_MAIL_ENABLED: "true"
+      # so serve para este compose de demonstracao; em producao a serio fica false
+      TIMEGRID_SEED_ENABLED: ${TIMEGRID_SEED_ENABLED:-true}
+    ports:
+      - "8080:8080"
+
 volumes:
   timegrid_db_data:

@@ -15,6 +15,9 @@ timegrid:
   security:
     jwt:
       secret: ${TIMEGRID_JWT_SECRET}
+  seed:
+    # só o docker-compose de demonstração liga isto (TIMEGRID_SEED_ENABLED=true); numa instalação a sério fica false
+    enabled: ${TIMEGRID_SEED_ENABLED:false}
   notifications:
     base-url: ${TIMEGRID_BASE_URL}
     email:
