@@ -17,15 +17,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class HolidayService {
-
-    private static final String CACHE_NAME = "organizationHolidays";
 
     private final HolidayRepository holidayRepository;
     private final CurrentUser currentUser;
@@ -68,7 +65,6 @@ public class HolidayService {
     }
 
     // feriados nacionais + da organização, para descontar dias úteis (banco de horas, ausências)
-    @Cacheable(CACHE_NAME)
     @Transactional(readOnly = true)
     public Set<LocalDate> datesBetween(UUID organizationId, LocalDate from, LocalDate to) {
         Set<LocalDate> dates = new HashSet<>();
