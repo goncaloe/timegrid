@@ -53,14 +53,14 @@ public class AbsenceRequestService {
 
     @Transactional(readOnly = true)
     public List<String> allowedActions(AbsenceRequest request) {
-        return workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(),
+        List<String> targets = workflowService.allowedTargets(WorkflowEntityType.ABSENCE, request.getStatus().name(),
                 currentUser.roles());
+        return approvalPolicy.withoutOwnApprovalTargets(request.getUser().getId(), targets);
     }
 
     @Transactional(readOnly = true)
     public long workingDays(AbsenceRequest request) {
-        return holidayService.workingDays(request.getOrganization().getId(), request.getStartDate(),
-                request.getEndDate());
+        return holidayService.workingDays(request.getOrganization().getId(), request.getStartDate(), request.getEndDate());
     }
 
     // uma única consulta de feriados para a lista toda, em vez de uma por pedido
@@ -240,12 +240,10 @@ public class AbsenceRequestService {
 
     private void checkOverlap(UUID userId, LocalDate startDate, LocalDate endDate, UUID excludeId) {
         boolean overlaps = absenceRequestRepository
-                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId,
-                        List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
+                .findByUserIdAndDeletedAtIsNullAndStatusNotIn(userId, List.of(AbsenceStatus.REJECTED, AbsenceStatus.CANCELLED))
                 .stream()
                 .filter(existing -> excludeId == null || !existing.getId().equals(excludeId))
-                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate)
-                        && !existing.getStartDate().isAfter(endDate));
+                .anyMatch(existing -> !existing.getEndDate().isBefore(startDate) && !existing.getStartDate().isAfter(endDate));
         if (overlaps) {
             throw new BusinessRuleException("absence.overlap");
         }

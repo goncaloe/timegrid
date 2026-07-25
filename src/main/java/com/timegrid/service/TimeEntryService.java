@@ -49,7 +49,9 @@ public class TimeEntryService {
 
     @Transactional(readOnly = true)
     public List<String> allowedActions(TimeEntry entry) {
-        return workflowService.allowedTargets(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(), currentUser.roles());
+        List<String> targets = workflowService.allowedTargets(WorkflowEntityType.TIME_ENTRY, entry.getStatus().name(),
+                currentUser.roles());
+        return approvalPolicy.withoutOwnApprovalTargets(entry.getUser().getId(), targets);
     }
 
     @Transactional(readOnly = true)
