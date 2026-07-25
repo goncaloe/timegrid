@@ -51,6 +51,10 @@ interface RejectTarget {
   label: string;
 }
 
+function approveErrorMessage(error: unknown): string {
+  return error instanceof ApiError && error.problem.detail ? error.problem.detail : 'Não foi possível aprovar.';
+}
+
 function ApprovalsPage() {
   const [tab, setTab] = useState<Tab>('timeEntries');
   const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null);
@@ -110,6 +114,9 @@ function ApprovalsPage() {
           {!isLoadingTimeEntries && (timeEntries ?? []).length === 0 && (
             <EmptyState message="Sem registos de horas por aprovar." />
           )}
+          {approveTimeEntry.isError && (
+            <span className={styles.error}>{approveErrorMessage(approveTimeEntry.error)}</span>
+          )}
           {!isLoadingTimeEntries && (timeEntries ?? []).length > 0 && (
             <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -143,30 +150,34 @@ function ApprovalsPage() {
                         <StatusBadge status={entry.status} label={STATUS_LABELS[entry.status] ?? entry.status} />
                       </td>
                       <td className={styles.actionsCell}>
-                        <button
-                          type="button"
-                          className={styles.approveButton}
-                          onClick={() => approveTimeEntry.mutate(entry.id)}
-                          disabled={approveTimeEntry.isPending}
-                        >
-                          Aprovar
-                        </button>
-                        <button type="button" className={styles.saldoButton} onClick={() => setBalanceUserId(entry.userId)}>
+                        {entry.allowedActions.includes('APPROVED') && (
+                          <button
+                            type="button"
+                            className={styles.approveButton}
+                            onClick={() => approveTimeEntry.mutate(entry.id)}
+                            disabled={approveTimeEntry.isPending}
+                          >
+                            Aprovar
+                          </button>
+                        )}
+                        <button type="button" className={styles.linkButton} onClick={() => setBalanceUserId(entry.userId)}>
                           Saldo
                         </button>
-                        <button
-                          type="button"
-                          className={styles.linkButton}
-                          onClick={() =>
-                            setRejectTarget({
-                              kind: 'timeEntry',
-                              id: entry.id,
-                              label: `registo de ${entry.userFullName} de ${formatDate(entry.workDate)}`,
-                            })
-                          }
-                        >
-                          Rejeitar
-                        </button>
+                        {entry.allowedActions.includes('REJECTED') && (
+                          <button
+                            type="button"
+                            className={styles.dangerLink}
+                            onClick={() =>
+                              setRejectTarget({
+                                kind: 'timeEntry',
+                                id: entry.id,
+                                label: `registo de ${entry.userFullName} de ${formatDate(entry.workDate)}`,
+                              })
+                            }
+                          >
+                            Rejeitar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -183,6 +194,7 @@ function ApprovalsPage() {
           {!isLoadingAbsences && (absences ?? []).length === 0 && (
             <EmptyState message="Sem pedidos de ausência por aprovar." />
           )}
+          {approveAbsence.isError && <span className={styles.error}>{approveErrorMessage(approveAbsence.error)}</span>}
           {!isLoadingAbsences && (absences ?? []).length > 0 && (
             <div className={styles.tableWrap}>
             <table className={styles.table}>
@@ -212,30 +224,34 @@ function ApprovalsPage() {
                         <StatusBadge status={absence.status} label={STATUS_LABELS[absence.status] ?? absence.status} />
                       </td>
                       <td className={styles.actionsCell}>
-                        <button
-                          type="button"
-                          className={styles.approveButton}
-                          onClick={() => approveAbsence.mutate(absence.id)}
-                          disabled={approveAbsence.isPending}
-                        >
-                          Aprovar
-                        </button>
-                        <button type="button" className={styles.saldoButton} onClick={() => setBalanceUserId(absence.userId)}>
+                        {absence.allowedActions.includes('APPROVED') && (
+                          <button
+                            type="button"
+                            className={styles.approveButton}
+                            onClick={() => approveAbsence.mutate(absence.id)}
+                            disabled={approveAbsence.isPending}
+                          >
+                            Aprovar
+                          </button>
+                        )}
+                        <button type="button" className={styles.linkButton} onClick={() => setBalanceUserId(absence.userId)}>
                           Saldo
                         </button>
-                        <button
-                          type="button"
-                          className={styles.linkButton}
-                          onClick={() =>
-                            setRejectTarget({
-                              kind: 'absence',
-                              id: absence.id,
-                              label: `ausência de ${absence.userFullName} de ${formatDate(absence.startDate)}`,
-                            })
-                          }
-                        >
-                          Rejeitar
-                        </button>
+                        {absence.allowedActions.includes('REJECTED') && (
+                          <button
+                            type="button"
+                            className={styles.dangerLink}
+                            onClick={() =>
+                              setRejectTarget({
+                                kind: 'absence',
+                                id: absence.id,
+                                label: `ausência de ${absence.userFullName} de ${formatDate(absence.startDate)}`,
+                              })
+                            }
+                          >
+                            Rejeitar
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
