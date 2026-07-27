@@ -1,11 +1,13 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import Button from '../../components/Button';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useCreateHoliday, useDeleteHoliday, useHolidays } from './hooks';
 import { toIsoDate } from '../../utils/date';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './HolidaysPage.module.css';
 
 function HolidaysPage() {
@@ -17,7 +19,7 @@ function HolidaysPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const { data: holidays, isLoading } = useHolidays(year);
+  const { data: holidays, isLoading, isError, error: loadError } = useHolidays(year);
   const createMutation = useCreateHoliday();
   const deleteMutation = useDeleteHoliday();
 
@@ -86,9 +88,11 @@ function HolidaysPage() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && (holidays ?? []).length === 0 && <EmptyState message="Sem feriados neste ano." />}
+      {isError && <ErrorState message={errorMessage(loadError)} />}
 
-      {!isLoading && (holidays ?? []).length > 0 && (
+      {!isLoading && !isError && (holidays ?? []).length === 0 && <EmptyState message="Sem feriados neste ano." />}
+
+      {!isLoading && !isError && (holidays ?? []).length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>

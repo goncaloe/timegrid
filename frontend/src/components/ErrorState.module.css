@@ -1,0 +1,8 @@
+.wrapper {
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--color-danger);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-danger);
+  border-radius: var(--radius-lg);
+}

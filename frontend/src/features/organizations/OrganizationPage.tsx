@@ -2,9 +2,11 @@ import { useState, type ChangeEvent, type FormEvent } from 'react';
 import Button from '../../components/Button';
 import Field from '../../components/Field';
 import Spinner from '../../components/Spinner';
+import ErrorState from '../../components/ErrorState';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useOrganization, useUpdateOrganization } from './hooks';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './OrganizationPage.module.css';
 
 const TIMEZONES = [
@@ -18,7 +20,7 @@ function OrganizationPage() {
   const { user } = useAuth();
   const canManage = user?.permissions.includes('organization:write') ?? false;
 
-  const { data: organization, isLoading } = useOrganization();
+  const { data: organization, isLoading, isError, error: loadError } = useOrganization();
   const updateMutation = useUpdateOrganization();
 
   const [name, setName] = useState('');
@@ -28,6 +30,11 @@ function OrganizationPage() {
 
   if (isLoading) {
     return <Spinner />;
+  }
+
+  if (isError) {
+    console.log(loadError);
+    return <ErrorState message={errorMessage(loadError)} />;
   }
 
   if (!organization) {
