@@ -1,6 +1,6 @@
 import { ApiError } from '../api/client';
 
-const FALLBACK = 'Não foi possível carregar os dados. Tenta novamente.';
+const FALLBACK = 'Não foi possível carregar os dados.';
 
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
