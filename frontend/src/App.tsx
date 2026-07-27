@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Spinner from './components/Spinner';
 import RequireAuth from './auth/RequireAuth';
@@ -37,7 +37,10 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/time-entries" element={<TimeEntriesPage />} />
+            {/* as notificações apontam para /time-entries/<id> (vista semanal não tem página de detalhe) */}
+            <Route path="/time-entries/:id" element={<Navigate to="/time-entries" replace />} />
             <Route path="/absences" element={<AbsencesPage />} />
+            <Route path="/absences/:id" element={<Navigate to="/absences" replace />} />
             <Route path="/holidays" element={<HolidaysPage />} />
             <Route path="/approvals" element={<ApprovalsPage />} />
             <Route path="/users" element={<UsersPage />} />
