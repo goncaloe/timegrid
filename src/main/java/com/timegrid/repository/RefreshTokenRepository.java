@@ -3,7 +3,6 @@ package com.timegrid.repository;
 import com.timegrid.entity.RefreshToken;
 import java.util.Optional;
 import java.util.UUID;
-import java.time.Instant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +14,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     @Modifying
     @Query("UPDATE RefreshToken rt SET rt.revokedAt = :now WHERE rt.userId = :userId AND rt.revokedAt IS NULL")
-    int revokeAllActiveForUser(@Param("userId") UUID userId, @Param("now") Instant now);
+    int revokeAllActiveForUser(@Param("userId") UUID userId, @Param("now") java.time.Instant now);
 
 }

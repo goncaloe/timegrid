@@ -33,7 +33,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsernameOrEmailIgnoreCase(String username, String email);
 
     @Query("""
-            SELECT distinct u 
+            SELECT DISTINCT u
             FROM User u
             JOIN u.roles r
             LEFT JOIN FETCH u.team
