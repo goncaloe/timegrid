@@ -198,3 +198,8 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 - cada registo de hora/ausência traz a lista de estados para onde o utilizador o pode transitar em `.allowedActions` calculados no servidor. O frontend usa isto para decidir que botões aparecem, em vez de duplicar as regras/logica do workflow.
 - Páginas do frontend por funcionalidade: registos com vista semanal, ausências com formulário, aprovações com separadores dos pendentes, dashboard com o banco de horas, feriados, notificações e exportações.
 - O sino das notificações mostra o contador das não lidas e recebe-as em tempo real por WebSocket/STOMP.
+
+### 27 Julho
+
+- Componentes partilhados no frontend (StatusBadge, EmptyState e TableRowActions), para as tabelas de registos e ausências não repetirem markup.
+- Páginas de utilizadores, departamentos e organização, com edição de roles e das horas diárias por utilizador.

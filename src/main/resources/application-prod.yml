@@ -27,5 +27,11 @@ timegrid:
   websocket:
     allowed-origins: ${TIMEGRID_BASE_URL}
 
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
 server:
   forward-headers-strategy: native
