@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
@@ -9,6 +10,7 @@ import AbsenceModal from './AbsenceModal';
 import { useAbsenceHistory, useAbsences, useCancelAbsence, useDeleteAbsence, useSubmitAbsence } from './hooks';
 import type { AbsenceRequest } from './api';
 import { formatDate } from '../../utils/date';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './AbsencesPage.module.css';
 
 function isEditable(status: string) {
@@ -38,7 +40,7 @@ function AbsencesPage() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [historyId, setHistoryId] = useState<string | null>(null);
 
-  const { data: absences, isLoading } = useAbsences(year);
+  const { data: absences, isLoading, isError, error } = useAbsences(year);
   const { data: history } = useAbsenceHistory(historyId);
   const submitMutation = useSubmitAbsence();
   const cancelMutation = useCancelAbsence();
@@ -74,9 +76,11 @@ function AbsencesPage() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && (absences ?? []).length === 0 && <EmptyState message="Sem pedidos de ausência neste ano." />}
+      {isError && <ErrorState message={errorMessage(error)} />}
 
-      {!isLoading && (absences ?? []).length > 0 && (
+      {!isLoading && !isError && (absences ?? []).length === 0 && <EmptyState message="Sem pedidos de ausência neste ano." />}
+
+      {!isLoading && !isError && (absences ?? []).length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>

@@ -1,6 +1,7 @@
 import { useMemo, useState, type MouseEvent } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
@@ -10,6 +11,7 @@ import { useDeleteTimeEntry, useSubmitTimeEntry, useTimeEntries, useTimeEntryHis
 import type { TimeEntry } from './api';
 import { addDays, formatWeekday, startOfWeek, toIsoDate } from '../../utils/date';
 import { formatMinutes } from '../../utils/formatMinutes';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './TimeEntriesPage.module.css';
 
 function isEditable(status: string) {
@@ -41,7 +43,7 @@ function TimeEntriesPage() {
   const from = toIsoDate(weekStart);
   const to = toIsoDate(weekEnd);
 
-  const { data: entries, isLoading } = useTimeEntries(from, to);
+  const { data: entries, isLoading, isError, error } = useTimeEntries(from, to);
   const { data: history } = useTimeEntryHistory(historyEntryId);
   const submitMutation = useSubmitTimeEntry();
   const deleteMutation = useDeleteTimeEntry();
@@ -92,11 +94,13 @@ function TimeEntriesPage() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && (entries ?? []).length === 0 && (
+      {isError && <ErrorState message={errorMessage(error)} />}
+
+      {!isLoading && !isError && (entries ?? []).length === 0 && (
         <EmptyState message="Sem registos nesta semana." />
       )}
 
-      {!isLoading && (entries ?? []).length > 0 && (
+      {!isLoading && !isError && (entries ?? []).length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>

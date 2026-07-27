@@ -4,12 +4,14 @@ import Button from '../../components/Button';
 import Field from '../../components/Field';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useTeams } from '../teams/hooks';
 import { useRoles } from '../access/hooks';
 import { useCreateUser, useDeleteUser, useRestoreUser, useUpdateUserDailyWorkMinutes, useUpdateUserRoles, useUpdateUserTeam, useUsers } from './hooks';
 import type { User } from './api';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './UsersPage.module.css';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -32,7 +34,7 @@ function UsersPage() {
   const [page, setPage] = useState(0);
   const [editState, setEditState] = useState<EditState | null>(null);
 
-  const { data: pageData, isLoading } = useUsers(page, PAGE_SIZE);
+  const { data: pageData, isLoading, isError, error: loadError } = useUsers(page, PAGE_SIZE);
   const { data: teams } = useTeams();
   const { data: roles } = useRoles();
 
@@ -60,9 +62,11 @@ function UsersPage() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && users.length === 0 && <EmptyState message="Sem utilizadores." />}
+      {isError && <ErrorState message={errorMessage(loadError)} />}
 
-      {!isLoading && users.length > 0 && (
+      {!isLoading && !isError && users.length === 0 && <EmptyState message="Sem utilizadores." />}
+
+      {!isLoading && !isError && users.length > 0 && (
         <>
           <div className={styles.tableWrap}>
           <table className={styles.table}>

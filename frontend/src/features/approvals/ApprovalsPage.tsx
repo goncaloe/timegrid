@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
 import { ApiError } from '../../api/client';
 import { startOfMonth, toIsoDate, formatDate } from '../../utils/date';
 import { formatMinutes } from '../../utils/formatMinutes';
+import { errorMessage } from '../../utils/errorMessage';
 import { useUserTimeBank } from '../approvals/hooks';
 import {
   useApproveAbsence,
@@ -61,13 +63,16 @@ function ApprovalsPage() {
   const [reason, setReason] = useState('');
   const [balanceUserId, setBalanceUserId] = useState<string | null>(null);
 
-  const { data: timeEntries, isLoading: isLoadingTimeEntries } = usePendingTimeEntries();
-  const { data: absences, isLoading: isLoadingAbsences } = usePendingAbsences();
+  const { data: timeEntries, isLoading: isLoadingTimeEntries, isError: isErrorTimeEntries, error: timeEntriesError } =
+    usePendingTimeEntries();
+  const { data: absences, isLoading: isLoadingAbsences, isError: isErrorAbsences, error: absencesError } =
+    usePendingAbsences();
 
   const monthStart = startOfMonth(new Date());
   const monthFrom = toIsoDate(monthStart);
   const monthTo = toIsoDate(new Date());
-  const { data: balance, isLoading: isLoadingBalance } = useUserTimeBank(balanceUserId, monthFrom, monthTo);
+  const { data: balance, isLoading: isLoadingBalance, isError: isErrorBalance, error: balanceError } =
+    useUserTimeBank(balanceUserId, monthFrom, monthTo);
 
   const approveTimeEntry = useApproveTimeEntry();
   const rejectTimeEntry = useRejectTimeEntry();
@@ -111,13 +116,14 @@ function ApprovalsPage() {
       {tab === 'timeEntries' && (
         <section>
           {isLoadingTimeEntries && <Spinner />}
-          {!isLoadingTimeEntries && (timeEntries ?? []).length === 0 && (
+          {isErrorTimeEntries && <ErrorState message={errorMessage(timeEntriesError)} />}
+          {!isLoadingTimeEntries && !isErrorTimeEntries && (timeEntries ?? []).length === 0 && (
             <EmptyState message="Sem registos de horas por aprovar." />
           )}
           {approveTimeEntry.isError && (
             <span className={styles.error}>{approveErrorMessage(approveTimeEntry.error)}</span>
           )}
-          {!isLoadingTimeEntries && (timeEntries ?? []).length > 0 && (
+          {!isLoadingTimeEntries && !isErrorTimeEntries && (timeEntries ?? []).length > 0 && (
             <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -191,11 +197,12 @@ function ApprovalsPage() {
       {tab === 'absences' && (
         <section>
           {isLoadingAbsences && <Spinner />}
-          {!isLoadingAbsences && (absences ?? []).length === 0 && (
+          {isErrorAbsences && <ErrorState message={errorMessage(absencesError)} />}
+          {!isLoadingAbsences && !isErrorAbsences && (absences ?? []).length === 0 && (
             <EmptyState message="Sem pedidos de ausência por aprovar." />
           )}
           {approveAbsence.isError && <span className={styles.error}>{approveErrorMessage(approveAbsence.error)}</span>}
-          {!isLoadingAbsences && (absences ?? []).length > 0 && (
+          {!isLoadingAbsences && !isErrorAbsences && (absences ?? []).length > 0 && (
             <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -265,7 +272,8 @@ function ApprovalsPage() {
       {balanceUserId && (
         <Modal title="Banco de horas do colaborador" onClose={() => setBalanceUserId(null)}>
           {isLoadingBalance && <Spinner />}
-          {!isLoadingBalance && balance && (
+          {isErrorBalance && <ErrorState message={errorMessage(balanceError)} />}
+          {!isLoadingBalance && !isErrorBalance && balance && (
             <div className={styles.balance}>
               <span className={styles.balanceMuted}>
                 {formatDate(monthFrom)} — {formatDate(monthTo)}

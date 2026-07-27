@@ -4,10 +4,12 @@ import Button from '../../components/Button';
 import Field from '../../components/Field';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
+import ErrorState from '../../components/ErrorState';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useCreateTeam, useDeleteTeam, useTeams, useUpdateTeam } from './hooks';
 import type { Team } from './api';
+import { errorMessage } from '../../utils/errorMessage';
 import styles from './TeamsPage.module.css';
 
 interface TeamModalState {
@@ -20,7 +22,7 @@ function TeamsPage() {
   const canManage = user?.permissions.includes('team:write') ?? false;
   const [modalState, setModalState] = useState<TeamModalState | null>(null);
 
-  const { data: teams, isLoading } = useTeams();
+  const { data: teams, isLoading, isError, error } = useTeams();
   const deleteMutation = useDeleteTeam();
 
   function handleDelete(team: Team) {
@@ -42,9 +44,11 @@ function TeamsPage() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && (teams ?? []).length === 0 && <EmptyState message="Sem departamentos nesta organização." />}
+      {isError && <ErrorState message={errorMessage(error)} />}
 
-      {!isLoading && (teams ?? []).length > 0 && (
+      {!isLoading && !isError && (teams ?? []).length === 0 && <EmptyState message="Sem departamentos nesta organização." />}
+
+      {!isLoading && !isError && (teams ?? []).length > 0 && (
         <div className={styles.tableWrap}>
         <table className={styles.table}>
           <thead>
