@@ -5,6 +5,7 @@ import com.timegrid.exception.ConflictException;
 import com.timegrid.exception.ForbiddenException;
 import com.timegrid.exception.NotFoundException;
 import com.timegrid.exception.UnauthorizedException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -35,32 +36,32 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ProblemDetail handleNotFound(NotFoundException ex, Locale locale) {
-        return problem(HttpStatus.NOT_FOUND, ex.getMessageKey(), ex.getArgs(), locale, null);
+    public ProblemDetail handleNotFound(NotFoundException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.NOT_FOUND, ex.getMessageKey(), ex.getArgs(), locale, null, request);
     }
 
     @ExceptionHandler(ConflictException.class)
-    public ProblemDetail handleConflict(ConflictException ex, Locale locale) {
-        return problem(HttpStatus.CONFLICT, ex.getMessageKey(), ex.getArgs(), locale, null);
+    public ProblemDetail handleConflict(ConflictException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, ex.getMessageKey(), ex.getArgs(), locale, null, request);
     }
 
     @ExceptionHandler(BusinessRuleException.class)
-    public ProblemDetail handleBusinessRule(BusinessRuleException ex, Locale locale) {
-        return problem(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessageKey(), ex.getArgs(), locale, null);
+    public ProblemDetail handleBusinessRule(BusinessRuleException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessageKey(), ex.getArgs(), locale, null, request);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ProblemDetail handleUnauthorized(UnauthorizedException ex, Locale locale) {
-        return problem(HttpStatus.UNAUTHORIZED, ex.getMessageKey(), null, locale, null);
+    public ProblemDetail handleUnauthorized(UnauthorizedException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.UNAUTHORIZED, ex.getMessageKey(), null, locale, null, request);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ProblemDetail handleForbidden(ForbiddenException ex, Locale locale) {
-        return problem(HttpStatus.FORBIDDEN, ex.getMessageKey(), null, locale, null);
+    public ProblemDetail handleForbidden(ForbiddenException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.FORBIDDEN, ex.getMessageKey(), null, locale, null, request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException ex, Locale locale) {
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex, Locale locale, HttpServletRequest request) {
         Map<String, String> errors = new LinkedHashMap<>();
         for (ObjectError error : ex.getBindingResult().getAllErrors()) {
             String field = error instanceof FieldError fieldError ? fieldError.getField() : error.getObjectName();
@@ -69,30 +70,29 @@ public class ApiExceptionHandler {
                     : error.getDefaultMessage();
             errors.putIfAbsent(field, message);
         }
-        return problem(HttpStatus.BAD_REQUEST, "validation.failed", null, locale, errors);
+        return problem(HttpStatus.BAD_REQUEST, "validation.failed", null, locale, errors, request);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ProblemDetail handleUnreadable(HttpMessageNotReadableException ex, Locale locale) {
-        return problem(HttpStatus.BAD_REQUEST, "malformed.request", null, locale, null);
+    public ProblemDetail handleUnreadable(HttpMessageNotReadableException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "malformed.request", null, locale, null, request);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex, Locale locale) {
-        return problem(HttpStatus.BAD_REQUEST, "invalid.parameter", null, locale, null);
+    public ProblemDetail handleTypeMismatch(MethodArgumentTypeMismatchException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "invalid.parameter", null, locale, null, request);
     }
 
     @ExceptionHandler(InvalidFormatException.class)
-    public ProblemDetail handleInvalidEnum(InvalidFormatException ex, Locale locale) {
-        return problem(HttpStatus.BAD_REQUEST, "invalid.parameter", null, locale, null);
+    public ProblemDetail handleInvalidEnum(InvalidFormatException ex, Locale locale, HttpServletRequest request) {
+        return problem(HttpStatus.BAD_REQUEST, "invalid.parameter", null, locale, null, request);
     }
 
     private ProblemDetail problem(HttpStatus status, String messageKey, Object[] args, Locale locale,
-            Map<String, String> errors) {
-        ProblemDetail detail = ProblemDetail.forStatusAndDetail(status,
-                messageSource.getMessage(messageKey, args, locale));
+            Map<String, String> errors, HttpServletRequest request) {
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(status, messageSource.getMessage(messageKey, args, locale));
         detail.setTitle(messageSource.getMessage("error.title", null, locale));
-        detail.setInstance(URI.create("/api"));
+        detail.setInstance(URI.create(request.getRequestURI()));
         if (errors != null && !errors.isEmpty()) {
             detail.setProperty("errors", errors);
         }
