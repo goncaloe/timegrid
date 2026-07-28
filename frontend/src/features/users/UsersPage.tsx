@@ -5,6 +5,7 @@ import Field from '../../components/Field';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorState from '../../components/ErrorState';
+import TableRowActions from '../../components/TableRowActions';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useTeams } from '../teams/hooks';
@@ -94,7 +95,7 @@ function UsersPage() {
                       {STATUS_LABELS[user.status] ?? user.status}
                     </span>
                   </td>
-                  <td className={styles.actionsCell}>
+                  <TableRowActions>
                     {canManage && (
                       <>
                         {user.id !== currentUser?.userId && (
@@ -117,7 +118,7 @@ function UsersPage() {
                         )}
                       </>
                     )}
-                  </td>
+                  </TableRowActions>
                 </tr>
               ))}
             </tbody>

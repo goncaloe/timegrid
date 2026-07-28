@@ -5,6 +5,7 @@ import Field from '../../components/Field';
 import Spinner from '../../components/Spinner';
 import EmptyState from '../../components/EmptyState';
 import ErrorState from '../../components/ErrorState';
+import TableRowActions from '../../components/TableRowActions';
 import { ApiError } from '../../api/client';
 import { useAuth } from '../../auth/useAuth';
 import { useCreateTeam, useDeleteTeam, useTeams, useUpdateTeam } from './hooks';
@@ -64,14 +65,14 @@ function TeamsPage() {
                 <td>{team.name}</td>
                 <td className={styles.notesCell}>{team.description}</td>
                 {canManage && (
-                  <td className={styles.actionsCell}>
-                    <button type="button" className={styles.linkButton} onClick={() => setModalState({ mode: 'edit', team })}>
-                      Editar
-                    </button>
-                    <button type="button" className={styles.dangerLink} onClick={() => handleDelete(team)}>
-                      Eliminar
-                    </button>
-                  </td>
+                  <TableRowActions>
+                      <button type="button" className={styles.linkButton} onClick={() => setModalState({ mode: 'edit', team })}>
+                          Editar
+                      </button>
+                      <button type="button" className={styles.dangerLink} onClick={() => handleDelete(team)}>
+                          Eliminar
+                      </button>
+                  </TableRowActions>
                 )}
               </tr>
             ))}
@@ -79,6 +80,8 @@ function TeamsPage() {
         </table>
         </div>
       )}
+
+
 
       {modalState && canManage && (
         <TeamModal

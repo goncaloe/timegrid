@@ -45,13 +45,6 @@
   white-space: nowrap;
 }
 
-.actionsCell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  white-space: nowrap;
-}
-
 .linkButton {
   background: none;
   border: none;

@@ -5,6 +5,7 @@ import ErrorState from '../../components/ErrorState';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusBadge from '../../components/StatusBadge';
+import TableRowActions from '../../components/TableRowActions';
 import { ApiError } from '../../api/client';
 import { startOfMonth, toIsoDate, formatDate } from '../../utils/date';
 import { formatMinutes } from '../../utils/formatMinutes';
@@ -155,7 +156,7 @@ function ApprovalsPage() {
                       <td>
                         <StatusBadge status={entry.status} label={STATUS_LABELS[entry.status] ?? entry.status} />
                       </td>
-                      <td className={styles.actionsCell}>
+                      <TableRowActions>
                         {entry.allowedActions.includes('APPROVED') && (
                           <button
                             type="button"
@@ -184,7 +185,7 @@ function ApprovalsPage() {
                             Rejeitar
                           </button>
                         )}
-                      </td>
+                      </TableRowActions>
                     </tr>
                   ))}
               </tbody>
@@ -230,7 +231,7 @@ function ApprovalsPage() {
                       <td>
                         <StatusBadge status={absence.status} label={STATUS_LABELS[absence.status] ?? absence.status} />
                       </td>
-                      <td className={styles.actionsCell}>
+                      <TableRowActions>
                         {absence.allowedActions.includes('APPROVED') && (
                           <button
                             type="button"
@@ -259,7 +260,7 @@ function ApprovalsPage() {
                             Rejeitar
                           </button>
                         )}
-                      </td>
+                      </TableRowActions>
                     </tr>
                   ))}
               </tbody>
