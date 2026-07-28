@@ -6,6 +6,7 @@ import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
 import StatusBadge from '../../components/StatusBadge';
+import TableRowActions from '../../components/TableRowActions';
 import AbsenceModal from './AbsenceModal';
 import { useAbsenceHistory, useAbsences, useCancelAbsence, useDeleteAbsence, useSubmitAbsence } from './hooks';
 import type { AbsenceRequest } from './api';
@@ -110,7 +111,7 @@ function AbsencesPage() {
                   <td>
                     <StatusBadge status={absence.status} label={STATUS_LABELS[absence.status] ?? absence.status} />
                   </td>
-                  <td className={styles.actionsCell}>
+                  <TableRowActions>
                     {absence.allowedActions.includes('SUBMITTED') && (
                       <button
                         type="button"
@@ -145,7 +146,7 @@ function AbsencesPage() {
                     >
                       Histórico
                     </button>
-                  </td>
+                  </TableRowActions>
                 </tr>
               ))}
           </tbody>

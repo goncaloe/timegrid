@@ -7,6 +7,7 @@ import Modal from '../../components/Modal';
 import StatusHistory from '../../components/StatusHistory';
 import EntryModal from './EntryModal';
 import StatusBadge from '../../components/StatusBadge';
+import TableRowActions from '../../components/TableRowActions';
 import { useDeleteTimeEntry, useSubmitTimeEntry, useTimeEntries, useTimeEntryHistory } from './hooks';
 import type { TimeEntry } from './api';
 import { addDays, formatWeekday, startOfWeek, toIsoDate } from '../../utils/date';
@@ -137,7 +138,7 @@ function TimeEntriesPage() {
                   <td>
                     <StatusBadge status={entry.status} label={STATUS_LABELS[entry.status] ?? entry.status} />
                   </td>
-                  <td className={styles.actionsCell}>
+                  <TableRowActions>
                     {entry.allowedActions.includes('SUBMITTED') && (
                       <button
                         type="button"
@@ -163,7 +164,7 @@ function TimeEntriesPage() {
                     >
                       Histórico
                     </button>
-                  </td>
+                  </TableRowActions>
                 </tr>
               ))}
           </tbody>
