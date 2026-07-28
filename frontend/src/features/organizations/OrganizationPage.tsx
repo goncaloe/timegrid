@@ -33,7 +33,6 @@ function OrganizationPage() {
   }
 
   if (isError) {
-    console.log(loadError);
     return <ErrorState message={errorMessage(loadError)} />;
   }
 
