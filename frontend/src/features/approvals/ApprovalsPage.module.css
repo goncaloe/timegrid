@@ -28,7 +28,6 @@
 
 .tableWrap {
   overflow-x: auto;
-  border-radius: var(--radius-lg);
 }
 
 .table {
@@ -36,7 +35,6 @@
   border-collapse: collapse;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   overflow: hidden;
   min-width: 640px;
 }
