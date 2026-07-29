@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.timegrid.config.MessageConfig;
 import com.timegrid.dto.AuthResponse;
+import com.timegrid.dto.LogoutRequest;
 import com.timegrid.exception.UnauthorizedException;
 import com.timegrid.security.AppUserDetailsService;
 import com.timegrid.security.JwtService;
@@ -87,6 +89,18 @@ class AuthControllerTest {
                         """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.detail").value("Invalid username or password."));
+    }
+
+    @Test
+    void logoutDevolve204() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                .contentType("application/json")
+                .content("""
+                        {"refreshToken":"algum-token"}
+                        """))
+                .andExpect(status().isNoContent());
+
+        verify(authService).logout(new LogoutRequest("algum-token"));
     }
 
 }
