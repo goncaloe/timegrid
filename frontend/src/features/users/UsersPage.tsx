@@ -307,7 +307,7 @@ function UserFormModal({ user, teams, roles, onClose }: UserFormModalProps) {
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="user-minutes">
-            Horas diárias
+            Minutos diários
           </label>
           <input
             id="user-minutes"

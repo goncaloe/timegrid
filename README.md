@@ -203,3 +203,9 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 
 - Componentes partilhados no frontend (StatusBadge, EmptyState e TableRowActions), para as tabelas de registos e ausências não repetirem markup.
 - Páginas de utilizadores, departamentos e organização, com edição de roles e das horas diárias por utilizador.
+
+### 29 Julho
+
+- Docker: Dockerfile do backend (jar + JRE) e do frontend (build do Vite servido por nginx).
+- Docker compose com backend, frontend, postgres e mailpit.
+- Swagger desligado em produção; OpenAPI documentado com springdoc.
