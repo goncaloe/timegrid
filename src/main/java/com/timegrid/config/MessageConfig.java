@@ -1,5 +1,7 @@
 package com.timegrid.config;
 
+import java.util.Locale;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.MessageSource;
@@ -13,6 +15,7 @@ public class MessageConfig {
         ReloadableResourceBundleMessageSource source = new ReloadableResourceBundleMessageSource();
         source.setBasename("classpath:i18n/messages");
         source.setDefaultEncoding("UTF-8");
+        source.setDefaultLocale(Locale.ENGLISH);
         return source;
     }
 

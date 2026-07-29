@@ -70,6 +70,18 @@ A base de dados arranca com dados de demonstração: 3 organizações, utilizado
 | Manager | `tiago.figueiredo` | `gestor123` |
 | Employee | `ines.moura` | `equipa2026` |
 
+## Testes
+
+
+```bash
+# 1. testes backend:
+./gradlew test
+
+# 2. frontend: Vitest
+cd frontend
+npm test
+```
+
 ## Especificações, ADRs e Outras Considerações
 
 ### 25 Junho
