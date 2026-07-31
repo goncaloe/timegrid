@@ -1,4 +1,3 @@
-// TODO: ver se vale a pena juntar os writers num so
 package com.timegrid.service;
 
 import com.timegrid.common.Messages;

@@ -8,7 +8,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-// mesma verificação repetida em registos de horas e ausêncais: quem aprova não pode ser o dono do pedido
+// mesma verificação repetida em registos de horas e ausências: quem aprova não pode ser o dono do pedido
 @Component
 @RequiredArgsConstructor
 public class ApprovalPolicy {
