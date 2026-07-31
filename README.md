@@ -221,3 +221,8 @@ npm test
 - Docker: Dockerfile do backend (jar + JRE) e do frontend (build do Vite servido por nginx).
 - Docker compose com backend, frontend, postgres e mailpit.
 - Swagger desligado em produção; OpenAPI documentado com springdoc.
+
+### 31 Julho
+
+- O projeto cresceu mais do que esperei inicialmente. Faria sentido reorganizar as pastas por domínio em vez de por camadas.
+- CI do GitHub Actions a correr o build do Gradle e os testes e lint do frontend.
